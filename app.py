@@ -113,6 +113,24 @@ class LearningPath(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Custom template filter
+@app.template_filter('nl2br')
+def nl2br_filter(text):
+    return text.replace('\n', '<br>\n') if text else ''
+
+# Error handlers
+@app.errorhandler(414)
+def request_uri_too_long(error):
+    return render_template('error.html', 
+                         error_code=414, 
+                         error_message="Request URI too long"), 414
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('error.html', 
+                         error_code=404, 
+                         error_message="Page not found"), 404
+
 # Routes
 @app.route('/')
 def index():
@@ -350,6 +368,14 @@ def add_comment(post_id):
     flash('Comment added successfully!')
     return redirect(url_for('forum_post', post_id=post_id))
 
+@app.route('/forum/post/<int:post_id>/like', methods=['POST'])
+@login_required
+def like_post(post_id):
+    post = ForumPost.query.get_or_404(post_id)
+    post.likes += 1
+    db.session.commit()
+    return jsonify({'success': True, 'likes': post.likes})
+
 @app.route('/roadmap')
 def roadmap():
     learning_paths = LearningPath.query.filter_by(is_active=True).order_by(LearningPath.order).all()
@@ -365,9 +391,27 @@ def ai_guide(path_id):
 @app.route('/ai_redraw/<int:artwork_id>')
 @login_required
 def ai_redraw(artwork_id):
-    artwork = Artwork.query.get_or_404(artwork_id)
-    redrawn_image = ai_analyzer.redraw_artwork(os.path.join(app.config['UPLOAD_FOLDER'], artwork.filename))
-    return render_template('ai_redraw.html', artwork=artwork, redrawn_image=redrawn_image)
+    try:
+        artwork = Artwork.query.get_or_404(artwork_id)
+        
+        # Check if the artwork file exists
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], artwork.filename)
+        if not os.path.exists(file_path):
+            flash('Original artwork file not found.', 'error')
+            return redirect(url_for('gallery'))
+        
+        # Attempt to redraw the artwork
+        redrawn_image, message = ai_analyzer.redraw_artwork(file_path)
+        
+        if redrawn_image is None:
+            flash(f'AI redraw failed: {message}', 'error')
+            return redirect(url_for('artwork_detail', artwork_id=artwork_id))
+        
+        return render_template('ai_redraw.html', artwork=artwork, redrawn_image=redrawn_image, message=message)
+    
+    except Exception as e:
+        flash(f'An error occurred during AI redraw: {str(e)}', 'error')
+        return redirect(url_for('gallery'))
 
 # Admin routes
 @app.route('/admin')
