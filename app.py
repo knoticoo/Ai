@@ -892,6 +892,234 @@ def generate_palette(artwork_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+# Art Battle Routes
+@app.route('/battles/create', methods=['GET', 'POST'])
+@login_required
+def create_battle():
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        theme = request.form['theme']
+        start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%dT%H:%M')
+        end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%dT%H:%M')
+        voting_end_date = datetime.strptime(request.form['voting_end_date'], '%Y-%m-%dT%H:%M')
+        max_participants = int(request.form.get('max_participants', 50))
+        prize_description = request.form.get('prize_description', '')
+        
+        # Validate dates
+        if start_date >= end_date or end_date >= voting_end_date:
+            flash('Invalid dates. Start < Submission End < Voting End', 'error')
+            return redirect(url_for('create_battle'))
+        
+        battle = ArtBattle(
+            title=title,
+            description=description,
+            theme=theme,
+            start_date=start_date,
+            end_date=end_date,
+            voting_end_date=voting_end_date,
+            max_participants=max_participants,
+            prize_description=prize_description,
+            creator_id=current_user.id
+        )
+        
+        db.session.add(battle)
+        db.session.commit()
+        
+        flash('Art Battle created successfully!', 'success')
+        return redirect(url_for('battle_detail', battle_id=battle.id))
+    
+    return render_template('create_battle.html')
+
+@app.route('/battle/<int:battle_id>/join', methods=['POST'])
+@login_required
+def join_battle(battle_id):
+    battle = ArtBattle.query.get_or_404(battle_id)
+    
+    # Check if battle is open for submissions
+    now = datetime.utcnow()
+    if now < battle.start_date:
+        return jsonify({'success': False, 'error': 'Battle has not started yet'})
+    if now > battle.end_date:
+        return jsonify({'success': False, 'error': 'Battle submission period has ended'})
+    
+    # Check if user already submitted
+    existing_submission = BattleSubmission.query.filter_by(
+        battle_id=battle_id, user_id=current_user.id
+    ).first()
+    
+    if existing_submission:
+        return jsonify({'success': False, 'error': 'You have already submitted to this battle'})
+    
+    # Check if battle is full
+    current_participants = BattleSubmission.query.filter_by(battle_id=battle_id).count()
+    if current_participants >= battle.max_participants:
+        return jsonify({'success': False, 'error': 'Battle is full'})
+    
+    return jsonify({'success': True, 'message': 'You can now submit your artwork'})
+
+@app.route('/battle/<int:battle_id>/submit', methods=['POST'])
+@login_required
+def submit_to_battle(battle_id):
+    battle = ArtBattle.query.get_or_404(battle_id)
+    
+    # Validation checks (same as join_battle)
+    now = datetime.utcnow()
+    if now < battle.start_date or now > battle.end_date:
+        flash('Battle submission period is not active', 'error')
+        return redirect(url_for('battle_detail', battle_id=battle_id))
+    
+    existing_submission = BattleSubmission.query.filter_by(
+        battle_id=battle_id, user_id=current_user.id
+    ).first()
+    
+    if existing_submission:
+        flash('You have already submitted to this battle', 'error')
+        return redirect(url_for('battle_detail', battle_id=battle_id))
+    
+    # Handle file upload
+    if 'artwork_file' not in request.files:
+        flash('No artwork file provided', 'error')
+        return redirect(url_for('battle_detail', battle_id=battle_id))
+    
+    file = request.files['artwork_file']
+    if file.filename == '':
+        flash('No file selected', 'error')
+        return redirect(url_for('battle_detail', battle_id=battle_id))
+    
+    if file and allowed_file(file.filename):
+        # Create artwork entry
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path)
+        
+        # Create artwork
+        artwork = Artwork(
+            title=request.form.get('title', f'Battle Entry: {battle.title}'),
+            description=request.form.get('description', f'My submission for {battle.title}'),
+            filename=unique_filename,
+            artist_id=current_user.id
+        )
+        db.session.add(artwork)
+        db.session.flush()  # Get artwork ID
+        
+        # Create battle submission
+        submission = BattleSubmission(
+            battle_id=battle_id,
+            user_id=current_user.id,
+            artwork_id=artwork.id,
+            submission_title=request.form.get('title', artwork.title)
+        )
+        db.session.add(submission)
+        
+        # Update user stats
+        update_user_stats(current_user.id, 'battles_participated')
+        
+        db.session.commit()
+        
+        flash('Successfully submitted to the battle!', 'success')
+        return redirect(url_for('battle_detail', battle_id=battle_id))
+    
+    flash('Invalid file type', 'error')
+    return redirect(url_for('battle_detail', battle_id=battle_id))
+
+@app.route('/battle/<int:battle_id>/vote/<int:submission_id>', methods=['POST'])
+@login_required
+def vote_battle(battle_id, submission_id):
+    battle = ArtBattle.query.get_or_404(battle_id)
+    submission = BattleSubmission.query.get_or_404(submission_id)
+    
+    # Check if voting is active
+    now = datetime.utcnow()
+    if now <= battle.end_date:
+        return jsonify({'success': False, 'error': 'Voting has not started yet'})
+    if now > battle.voting_end_date:
+        return jsonify({'success': False, 'error': 'Voting has ended'})
+    
+    # Check if user is trying to vote for their own submission
+    if submission.user_id == current_user.id:
+        return jsonify({'success': False, 'error': 'Cannot vote for your own submission'})
+    
+    # Check if user already voted in this battle
+    existing_vote = BattleVote.query.filter_by(
+        battle_id=battle_id, user_id=current_user.id
+    ).first()
+    
+    if existing_vote:
+        # Update existing vote
+        existing_vote.submission_id = submission_id
+        existing_vote.voted_at = datetime.utcnow()
+    else:
+        # Create new vote
+        vote = BattleVote(
+            battle_id=battle_id,
+            submission_id=submission_id,
+            user_id=current_user.id
+        )
+        db.session.add(vote)
+    
+    db.session.commit()
+    
+    # Get updated vote count
+    vote_count = BattleVote.query.filter_by(submission_id=submission_id).count()
+    
+    return jsonify({
+        'success': True, 
+        'message': 'Vote recorded!',
+        'vote_count': vote_count
+    })
+
+@app.route('/battle/<int:battle_id>/results')
+def battle_results(battle_id):
+    battle = ArtBattle.query.get_or_404(battle_id)
+    
+    # Check if voting has ended
+    now = datetime.utcnow()
+    if now <= battle.voting_end_date:
+        flash('Voting is still in progress', 'info')
+        return redirect(url_for('battle_detail', battle_id=battle_id))
+    
+    # Get submissions with vote counts
+    submissions = db.session.query(
+        BattleSubmission,
+        Artwork,
+        User,
+        db.func.count(BattleVote.id).label('vote_count')
+    ).join(
+        Artwork, BattleSubmission.artwork_id == Artwork.id
+    ).join(
+        User, BattleSubmission.user_id == User.id
+    ).outerjoin(
+        BattleVote, BattleSubmission.id == BattleVote.submission_id
+    ).filter(
+        BattleSubmission.battle_id == battle_id
+    ).group_by(
+        BattleSubmission.id
+    ).order_by(
+        db.func.count(BattleVote.id).desc()
+    ).all()
+    
+    # Update battle status if not already done
+    if battle.status != 'completed':
+        battle.status = 'completed'
+        
+        # Award winner
+        if submissions:
+            winner_submission = submissions[0][0]  # BattleSubmission object
+            battle.winner_id = winner_submission.user_id
+            
+            # Update winner stats
+            update_user_stats(winner_submission.user_id, 'battles_won')
+            
+            # Award experience to winner
+            winner = User.query.get(winner_submission.user_id)
+            winner.experience += 100  # Battle win bonus
+        
+        db.session.commit()
+    
+    return render_template('battle_results.html', battle=battle, submissions=submissions)
+
 # Admin routes
 @app.route('/admin')
 @login_required

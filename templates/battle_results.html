@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block title %}{{ battle.title }} - Results - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">🏆 Battle Results</h1>
+        <h2 class="h4 text-muted">{{ battle.title }}</h2>
+        
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('battles') }}">Battles</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('battle_detail', battle_id=battle.id) }}">{{ battle.title }}</a></li>
+                <li class="breadcrumb-item active">Results</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <!-- Battle Info -->
+    <div class="row mb-5">
+        <div class="col-md-8 mx-auto">
+            <div class="card bg-dark text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ battle.title }}</h5>
+                    <p class="card-text">
+                        <span class="badge bg-primary me-2">{{ battle.theme }}</span>
+                        <span class="badge bg-success me-2">{{ submissions|length }} Submissions</span>
+                        <span class="badge bg-info">{{ submissions|map(attribute=3)|sum }} Total Votes</span>
+                    </p>
+                    <p class="card-text">{{ battle.description }}</p>
+                    <small class="text-light">
+                        <i class="fas fa-flag-checkered me-1"></i>
+                        Battle completed {{ battle.voting_end_date.strftime('%B %d, %Y at %I:%M %p') }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if submissions %}
+    <!-- Winner Podium -->
+    <div class="mb-5">
+        <h3 class="text-center mb-4">🏆 Victory Podium</h3>
+        <div class="row justify-content-center">
+            <!-- Top 3 Winners -->
+            {% for rank in range(min(3, submissions|length)) %}
+            {% set submission, artwork, user, vote_count = submissions[rank] %}
+            <div class="col-md-4 mb-4">
+                <div class="card podium-card {% if rank == 0 %}winner-card{% elif rank == 1 %}second-place{% elif rank == 2 %}third-place{% endif %}">
+                    <!-- Rank Badge -->
+                    <div class="rank-badge">
+                        {% if rank == 0 %}
+                            <i class="fas fa-crown"></i> 1st
+                        {% elif rank == 1 %}
+                            <i class="fas fa-medal"></i> 2nd
+                        {% else %}
+                            <i class="fas fa-award"></i> 3rd
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-img-wrapper">
+                        <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                             class="card-img-top" alt="{{ submission.submission_title }}">
+                        <div class="vote-overlay">
+                            <span class="vote-count">
+                                <i class="fas fa-heart"></i> {{ vote_count }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body text-center">
+                        <h6 class="card-title">{{ submission.submission_title }}</h6>
+                        <p class="card-text">
+                            <small class="text-muted">by</small>
+                            <strong>{{ user.username }}</strong>
+                        </p>
+                        
+                        {% if rank == 0 %}
+                            <div class="winner-effects">
+                                <div class="sparkle"></div>
+                                <div class="sparkle"></div>
+                                <div class="sparkle"></div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{{ url_for('artwork_detail', artwork_id=artwork.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                            <a href="{{ url_for('profile', username=user.username) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-user me-1"></i>Artist
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- All Submissions Leaderboard -->
+    <div class="mb-5">
+        <h3 class="text-center mb-4">📊 Complete Leaderboard</h3>
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="80">Rank</th>
+                                <th width="100">Artwork</th>
+                                <th>Title</th>
+                                <th>Artist</th>
+                                <th width="120" class="text-center">Votes</th>
+                                <th width="150" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission, artwork, user, vote_count in submissions %}
+                            <tr class="{% if loop.index0 == 0 %}table-warning{% elif loop.index0 == 1 %}table-light{% elif loop.index0 == 2 %}table-info{% endif %}">
+                                <td>
+                                    <span class="rank-number">
+                                        {% if loop.index0 == 0 %}
+                                            <i class="fas fa-crown text-warning"></i> #{{ loop.index }}
+                                        {% elif loop.index0 == 1 %}
+                                            <i class="fas fa-medal text-secondary"></i> #{{ loop.index }}
+                                        {% elif loop.index0 == 2 %}
+                                            <i class="fas fa-award text-info"></i> #{{ loop.index }}
+                                        {% else %}
+                                            #{{ loop.index }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                                         class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;" 
+                                         alt="{{ submission.submission_title }}">
+                                </td>
+                                <td>
+                                    <strong>{{ submission.submission_title }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ artwork.description[:50] }}{% if artwork.description|length > 50 %}...{% endif %}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('profile', username=user.username) }}" class="text-decoration-none">
+                                        <strong>{{ user.username }}</strong>
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">Level {{ user.level }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary fs-6">
+                                        <i class="fas fa-heart me-1"></i>{{ vote_count }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('artwork_detail', artwork_id=artwork.id) }}" 
+                                           class="btn btn-outline-primary" title="View Artwork">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('ai_style_transfer_page', artwork_id=artwork.id) }}" 
+                                           class="btn btn-outline-warning" title="AI Style Transfer">
+                                            <i class="fas fa-magic"></i>
+                                        </a>
+                                        <a href="{{ url_for('profile', username=user.username) }}" 
+                                           class="btn btn-outline-secondary" title="Artist Profile">
+                                            <i class="fas fa-user"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">{{ submissions|length }}</h5>
+                    <p class="card-text">Total Submissions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">{{ submissions|map(attribute=3)|sum }}</h5>
+                    <p class="card-text">Total Votes Cast</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">{{ ((battle.voting_end_date - battle.start_date).days) }}</h5>
+                    <p class="card-text">Battle Duration (Days)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        {% if submissions %}
+                            {{ "%.1f"|format(submissions|map(attribute=3)|sum / submissions|length) }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h5>
+                    <p class="card-text">Avg Votes per Entry</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- No Submissions -->
+    <div class="text-center py-5">
+        <i class="fas fa-sad-cry fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No Submissions</h4>
+        <p class="text-muted">This battle didn't receive any submissions.</p>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div class="text-center">
+        <a href="{{ url_for('battle_detail', battle_id=battle.id) }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-2"></i>Back to Battle
+        </a>
+        <a href="{{ url_for('battles') }}" class="btn btn-primary">
+            <i class="fas fa-sword me-2"></i>More Battles
+        </a>
+    </div>
+</div>
+
+<style>
+.podium-card {
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.winner-card {
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    transform: scale(1.05);
+}
+
+.second-place {
+    border: 2px solid #c0c0c0;
+    box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+}
+
+.third-place {
+    border: 2px solid #cd7f32;
+    box-shadow: 0 0 15px rgba(205, 127, 50, 0.3);
+}
+
+.rank-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+    z-index: 10;
+    font-size: 0.9rem;
+}
+
+.winner-card .rank-badge {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    color: #000;
+}
+
+.card-img-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-img-top {
+    height: 250px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.podium-card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.vote-overlay {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.winner-effects {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #ffd700;
+    border-radius: 50%;
+    animation: sparkle 2s infinite;
+}
+
+.sparkle:nth-child(1) {
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.sparkle:nth-child(2) {
+    top: 60%;
+    right: 15%;
+    animation-delay: 0.7s;
+}
+
+.sparkle:nth-child(3) {
+    bottom: 30%;
+    left: 80%;
+    animation-delay: 1.4s;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+.rank-number {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .podium-card {
+        margin-bottom: 2rem;
+    }
+    
+    .winner-card {
+        transform: scale(1);
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+/* Confetti Animation for Winner */
+.winner-card::before {
+    content: '🎉';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 2rem;
+    animation: bounce 2s infinite;
+    z-index: 5;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+</style>
+
+<script>
+// Add celebration effects for winner
+document.addEventListener('DOMContentLoaded', function() {
+    const winnerCard = document.querySelector('.winner-card');
+    if (winnerCard) {
+        // Add extra sparkle effects
+        setTimeout(() => {
+            createFloatingEmojis();
+        }, 1000);
+    }
+});
+
+function createFloatingEmojis() {
+    const emojis = ['🎉', '🏆', '⭐', '🥇', '👑'];
+    const container = document.querySelector('.winner-card');
+    
+    for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+            const emoji = document.createElement('div');
+            emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.position = 'absolute';
+            emoji.style.fontSize = '1.5rem';
+            emoji.style.pointerEvents = 'none';
+            emoji.style.zIndex = '1000';
+            emoji.style.left = Math.random() * 100 + '%';
+            emoji.style.top = '-20px';
+            emoji.style.animation = 'float-up 3s ease-out forwards';
+            
+            container.style.position = 'relative';
+            container.appendChild(emoji);
+            
+            setTimeout(() => {
+                if (emoji.parentNode) {
+                    emoji.parentNode.removeChild(emoji);
+                }
+            }, 3000);
+        }, i * 200);
+    }
+}
+
+// Add CSS for floating animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes float-up {
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px) rotate(360deg);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Create Art Battle - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">⚔️ Create Art Battle</h1>
+        <p class="lead text-muted">Challenge the community with an epic art battle</p>
+        
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('battles') }}">Battles</a></li>
+                <li class="breadcrumb-item active">Create Battle</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sword me-2"></i>Battle Configuration
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="battleForm">
+                        <!-- Basic Information -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle me-2 text-primary"></i>Basic Information
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Battle Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="e.g., Fantasy Creatures Showdown">
+                                    <div class="form-text">Choose an exciting title that will attract participants</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="theme" class="form-label">Theme *</label>
+                                    <select class="form-select" id="theme" name="theme" required>
+                                        <option value="">Select a theme...</option>
+                                        <option value="Fantasy">🧙‍♂️ Fantasy</option>
+                                        <option value="Sci-Fi">🚀 Sci-Fi</option>
+                                        <option value="Nature">🌿 Nature</option>
+                                        <option value="Portrait">👤 Portrait</option>
+                                        <option value="Abstract">🎨 Abstract</option>
+                                        <option value="Animals">🦁 Animals</option>
+                                        <option value="Landscape">🏔️ Landscape</option>
+                                        <option value="Urban">🏙️ Urban</option>
+                                        <option value="Minimalist">⚪ Minimalist</option>
+                                        <option value="Dark Art">🖤 Dark Art</option>
+                                        <option value="Anime">👀 Anime</option>
+                                        <option value="Steampunk">⚙️ Steampunk</option>
+                                        <option value="Medieval">🏰 Medieval</option>
+                                        <option value="Cyberpunk">💻 Cyberpunk</option>
+                                        <option value="Horror">👻 Horror</option>
+                                        <option value="Romance">💕 Romance</option>
+                                        <option value="Free Theme">🎯 Free Theme</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description *</label>
+                                    <textarea class="form-control" id="description" name="description" rows="4" required
+                                              placeholder="Describe the battle theme, rules, and what you're looking for in submissions..."></textarea>
+                                    <div class="form-text">Provide clear guidelines and inspiration for participants</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Timeline -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-clock me-2 text-warning"></i>Battle Timeline
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="start_date" class="form-label">Start Date & Time *</label>
+                                        <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
+                                        <div class="form-text">When submissions open</div>
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label for="end_date" class="form-label">Submission Deadline *</label>
+                                        <input type="datetime-local" class="form-control" id="end_date" name="end_date" required>
+                                        <div class="form-text">Last chance to submit</div>
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label for="voting_end_date" class="form-label">Voting Ends *</label>
+                                        <input type="datetime-local" class="form-control" id="voting_end_date" name="voting_end_date" required>
+                                        <div class="form-text">When winner is decided</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Timeline Visual -->
+                                <div class="mt-3 p-3 bg-light rounded">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-timeline me-2"></i>Battle Timeline Preview
+                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-center">
+                                            <div class="badge bg-success mb-1">Start</div>
+                                            <small class="d-block text-muted" id="preview-start">Select start date</small>
+                                        </div>
+                                        <div class="flex-fill mx-2">
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-primary" style="width: 50%"></div>
+                                                <div class="progress-bar bg-warning" style="width: 50%"></div>
+                                            </div>
+                                            <small class="text-muted">Submission Period → Voting Period</small>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="badge bg-info mb-1">Submission End</div>
+                                            <small class="d-block text-muted" id="preview-end">Select end date</small>
+                                        </div>
+                                        <div class="text-center ms-2">
+                                            <div class="badge bg-danger mb-1">Final Results</div>
+                                            <small class="d-block text-muted" id="preview-voting-end">Select voting end</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Battle Settings -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-cogs me-2 text-info"></i>Battle Settings
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="max_participants" class="form-label">Max Participants</label>
+                                        <select class="form-select" id="max_participants" name="max_participants">
+                                            <option value="10">10 participants (Intimate)</option>
+                                            <option value="25">25 participants (Small)</option>
+                                            <option value="50" selected>50 participants (Medium)</option>
+                                            <option value="100">100 participants (Large)</option>
+                                            <option value="250">250 participants (Epic)</option>
+                                            <option value="500">500 participants (Legendary)</option>
+                                        </select>
+                                        <div class="form-text">Larger battles create more excitement but take longer to fill</div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="prize_description" class="form-label">Prize Description</label>
+                                        <input type="text" class="form-control" id="prize_description" name="prize_description" 
+                                               placeholder="e.g., Winner gets featured on homepage">
+                                        <div class="form-text">Optional: What does the winner receive?</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Card -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-eye me-2 text-success"></i>Battle Preview
+                                </h5>
+                                
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title" id="preview-title">Enter a title above...</h6>
+                                        <p class="card-text">
+                                            <span class="badge bg-primary" id="preview-theme">Select theme</span>
+                                            <span class="badge bg-secondary ms-1" id="preview-participants">50 max participants</span>
+                                        </p>
+                                        <p class="card-text" id="preview-description">Enter a description above...</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            <span id="preview-timeline">Set your timeline above</span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('battles') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="previewBattle()">
+                                    <i class="fas fa-eye me-2"></i>Preview
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-sword me-2"></i>Create Battle
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #6f42c1);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.preview-card {
+    transition: all 0.3s ease;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -15px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid #007bff;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+</style>
+
+<script>
+// Real-time preview updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates (start: now + 1 hour, end: now + 1 week, voting: now + 2 weeks)
+    const now = new Date();
+    const startDate = new Date(now.getTime() + 60 * 60 * 1000); // +1 hour
+    const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // +1 week
+    const votingEndDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // +2 weeks
+    
+    document.getElementById('start_date').value = formatDateTimeLocal(startDate);
+    document.getElementById('end_date').value = formatDateTimeLocal(endDate);
+    document.getElementById('voting_end_date').value = formatDateTimeLocal(votingEndDate);
+    
+    updateTimelinePreview();
+    
+    // Live preview updates
+    document.getElementById('title').addEventListener('input', function() {
+        const title = this.value || 'Enter a title above...';
+        document.getElementById('preview-title').textContent = title;
+    });
+    
+    document.getElementById('theme').addEventListener('change', function() {
+        const theme = this.value || 'Select theme';
+        document.getElementById('preview-theme').textContent = theme;
+    });
+    
+    document.getElementById('description').addEventListener('input', function() {
+        const description = this.value || 'Enter a description above...';
+        document.getElementById('preview-description').textContent = description;
+    });
+    
+    document.getElementById('max_participants').addEventListener('change', function() {
+        const participants = this.value + ' max participants';
+        document.getElementById('preview-participants').textContent = participants;
+    });
+    
+    // Timeline preview updates
+    ['start_date', 'end_date', 'voting_end_date'].forEach(id => {
+        document.getElementById(id).addEventListener('change', updateTimelinePreview);
+    });
+});
+
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function updateTimelinePreview() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const votingEndDate = document.getElementById('voting_end_date').value;
+    
+    if (startDate) {
+        const formatted = new Date(startDate).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        document.getElementById('preview-start').textContent = formatted;
+    }
+    
+    if (endDate) {
+        const formatted = new Date(endDate).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        document.getElementById('preview-end').textContent = formatted;
+    }
+    
+    if (votingEndDate) {
+        const formatted = new Date(votingEndDate).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        document.getElementById('preview-voting-end').textContent = formatted;
+    }
+    
+    // Update timeline text
+    if (startDate && votingEndDate) {
+        const start = new Date(startDate);
+        const voting = new Date(votingEndDate);
+        const duration = Math.ceil((voting - start) / (1000 * 60 * 60 * 24));
+        document.getElementById('preview-timeline').textContent = `${duration} day battle`;
+    }
+}
+
+function previewBattle() {
+    // Scroll to preview section
+    document.querySelector('.card.bg-light').scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'center'
+    });
+    
+    // Add a gentle highlight effect
+    const previewCard = document.querySelector('.card.bg-light');
+    previewCard.classList.add('border-primary');
+    setTimeout(() => {
+        previewCard.classList.remove('border-primary');
+    }, 2000);
+}
+
+// Form validation
+document.getElementById('battleForm').addEventListener('submit', function(e) {
+    const startDate = new Date(document.getElementById('start_date').value);
+    const endDate = new Date(document.getElementById('end_date').value);
+    const votingEndDate = new Date(document.getElementById('voting_end_date').value);
+    
+    if (startDate >= endDate) {
+        e.preventDefault();
+        alert('Start date must be before submission deadline');
+        return;
+    }
+    
+    if (endDate >= votingEndDate) {
+        e.preventDefault();
+        alert('Submission deadline must be before voting ends');
+        return;
+    }
+    
+    // Check if start date is in the past
+    if (startDate < new Date()) {
+        e.preventDefault();
+        alert('Start date cannot be in the past');
+        return;
+    }
+});
+</script>
+{% endblock %}
