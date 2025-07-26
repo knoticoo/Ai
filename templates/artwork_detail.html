@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}{{ artwork.title }} - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Artwork Image -->
+        <div class="col-lg-8">
+            <div class="card">
+                <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                     alt="{{ artwork.title }}" class="img-fluid rounded">
+            </div>
+        </div>
+        
+        <!-- Artwork Info -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title mb-3">{{ artwork.title }}</h2>
+                    
+                    <div class="mb-3">
+                        <p class="text-muted mb-1">by 
+                            <a href="{{ url_for('profile', username=artwork.artist.username) }}" 
+                               class="text-decoration-none">{{ artwork.artist.username }}</a>
+                        </p>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ artwork.upload_date.strftime('%B %d, %Y') }}
+                        </small>
+                    </div>
+                    
+                    {% if artwork.description %}
+                    <div class="mb-3">
+                        <h6>Description</h6>
+                        <p>{{ artwork.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-secondary me-2">{{ artwork.category }}</span>
+                        {% if artwork.tags %}
+                            {% for tag in artwork.tags.split(',') %}
+                                <span class="badge bg-light text-dark">{{ tag.strip() }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    {% if artwork.ai_score %}
+                    <div class="mb-4">
+                        <h6>AI Score</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-3">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {{ artwork.ai_score * 100 }}%"></div>
+                            </div>
+                            <span class="score-badge">
+                                {{ "%.1f"|format(artwork.ai_score * 10) }}/10
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2">
+                        {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('ai_redraw', artwork_id=artwork.id) }}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-magic me-2"></i>AI Redraw
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('gallery') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Gallery
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Analysis -->
+    {% if artwork.ai_feedback %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-brain me-2 text-primary"></i>AI Analysis
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>Feedback & Suggestions</h6>
+                            <div class="analysis-content">
+                                {{ artwork.ai_feedback|replace('\n', '<br>')|safe }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Analysis Breakdown</h6>
+                            <div class="analysis-metrics">
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Composition</span>
+                                        <span>85%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Color Theory</span>
+                                        <span>78%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Technique</span>
+                                        <span>82%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 82%"></div>
+                                    </div>
+                                </div>
+                                <div class="metric-item mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Style</span>
+                                        <span>90%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: 90%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Similar Artworks -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4">More from {{ artwork.artist.username }}</h3>
+            <div class="artwork-grid">
+                {% for similar_artwork in artwork.artist.artworks[:3] %}
+                    {% if similar_artwork.id != artwork.id %}
+                    <div class="artwork-card">
+                        <img src="{{ url_for('static', filename='uploads/' + similar_artwork.filename) }}" 
+                             alt="{{ similar_artwork.title }}" class="artwork-image">
+                        <div class="artwork-info">
+                            <h6 class="mb-2">{{ similar_artwork.title }}</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if similar_artwork.ai_score %}
+                                <span class="score-badge">
+                                    {{ "%.1f"|format(similar_artwork.ai_score * 10) }}/10
+                                </span>
+                                {% endif %}
+                                <a href="{{ url_for('artwork_detail', artwork_id=similar_artwork.id) }}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.analysis-content {
+    line-height: 1.8;
+    color: var(--text-color);
+}
+
+.analysis-metrics .metric-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 3px;
+}
+
+.artwork-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+</style>
+{% endblock %}

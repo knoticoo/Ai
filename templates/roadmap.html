@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Roadmap - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">Learning Roadmap</h1>
+        <p class="lead text-muted">Master art techniques with AI-powered learning guides</p>
+    </div>
+    
+    <!-- Learning Paths -->
+    {% if learning_paths %}
+    <div class="row g-4">
+        {% for path in learning_paths %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">{{ path.title }}</h5>
+                        <span class="badge bg-primary">{{ path.difficulty }}</span>
+                    </div>
+                    
+                    <p class="card-text">{{ path.description }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-sort-numeric-up me-1"></i>Level {{ path.order }}
+                        </small>
+                        <a href="{{ url_for('ai_guide', path_id=path.id) }}" 
+                           class="btn btn-primary btn-sm">
+                            <i class="fas fa-graduation-cap me-2"></i>Start Learning
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-road fa-4x text-muted mb-4"></i>
+        <h3>No Learning Paths Available</h3>
+        <p class="text-muted">Learning paths will be added soon!</p>
+    </div>
+    {% endif %}
+    
+    <!-- Learning Tips -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>Learning Tips
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Start with fundamentals before moving to advanced topics
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Practice regularly, even if just for 15 minutes a day
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Don't be afraid to make mistakes - they're part of learning
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Study the work of artists you admire
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Experiment with different techniques and styles
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>
+                                    Join our community for feedback and inspiration
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

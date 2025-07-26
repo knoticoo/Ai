@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}ArtAI - AI-Powered Art Analysis & Learning Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Transform Your Art with AI</h1>
+        <p class="hero-subtitle">Get instant feedback, personalized learning guides, and join a community of artists</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('upload_artwork') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-upload me-2"></i>Upload Your Art
+                </a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Get Started
+                </a>
+            {% endif %}
+            <a href="{{ url_for('gallery') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-images me-2"></i>Browse Gallery
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-4 fw-bold">Why Choose ArtAI?</h2>
+            <p class="lead text-muted">Everything you need to improve your artistic skills</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>AI Analysis</h4>
+                    <p>Get instant, detailed feedback on your artwork including composition, color theory, technique, and style analysis.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h4>Learning Guides</h4>
+                    <p>Access personalized AI-generated learning paths and comprehensive guides for any art technique or style.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>Community</h4>
+                    <p>Join a vibrant community of artists, participate in challenges, and share your progress in our forum.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h4>Challenges</h4>
+                    <p>Participate in regular art challenges to push your skills and compete with other artists.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h4>AI Redraw</h4>
+                    <p>See your artwork reimagined with AI-powered redrawing and stylization features.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Progress Tracking</h4>
+                    <p>Track your artistic progress with detailed analytics and improvement suggestions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Artworks Section -->
+{% if recent_artworks %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="display-5 fw-bold">Recent Artworks</h2>
+            <a href="{{ url_for('gallery') }}" class="btn btn-primary">
+                View All <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        
+        <div class="artwork-grid">
+            {% for artwork in recent_artworks %}
+            <div class="artwork-card">
+                <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                     alt="{{ artwork.title }}" class="artwork-image">
+                <div class="artwork-info">
+                    <h5 class="mb-2">{{ artwork.title }}</h5>
+                    <p class="text-muted mb-2">by {{ artwork.artist.username }}</p>
+                    {% if artwork.ai_score %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="score-badge">
+                            <i class="fas fa-star me-1"></i>{{ "%.1f"|format(artwork.ai_score * 10) }}/10
+                        </span>
+                        <span class="badge bg-secondary">{{ artwork.category }}</span>
+                    </div>
+                    {% endif %}
+                    <a href="{{ url_for('artwork_detail', artwork_id=artwork.id) }}" 
+                       class="btn btn-outline-primary btn-sm mt-2 w-100">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Active Challenges Section -->
+{% if active_challenges %}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="display-5 fw-bold">Active Challenges</h2>
+            <a href="{{ url_for('challenges') }}" class="btn btn-secondary">
+                View All <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        
+        <div class="row g-4">
+            {% for challenge in active_challenges %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card challenge-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title">{{ challenge.title }}</h5>
+                            <span class="badge bg-warning text-dark">{{ challenge.difficulty }}</span>
+                        </div>
+                        <p class="card-text">{{ challenge.description[:100] }}{% if challenge.description|length > 100 %}...{% endif %}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">
+                                <i class="fas fa-gem me-1"></i>{{ challenge.reward_exp }} XP
+                            </span>
+                            <a href="{{ url_for('challenge_detail', challenge_id=challenge.id) }}" 
+                               class="btn btn-primary btn-sm">
+                                Participate
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-4 fw-bold">How It Works</h2>
+            <p class="lead text-muted">Get started in just a few simple steps</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-upload fa-2x"></i>
+                    </div>
+                    <h5>1. Upload</h5>
+                    <p class="text-muted">Upload your artwork in any common format</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-brain fa-2x"></i>
+                    </div>
+                    <h5>2. Analyze</h5>
+                    <p class="text-muted">Our AI analyzes your artwork instantly</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                    <h5>3. Feedback</h5>
+                    <p class="text-muted">Get detailed feedback and suggestions</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                    <h5>4. Improve</h5>
+                    <p class="text-muted">Follow personalized learning paths</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center">
+            <h2 class="display-4 fw-bold mb-3">Ready to Transform Your Art?</h2>
+            <p class="lead mb-4">Join thousands of artists who are already improving their skills with AI</p>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('upload_artwork') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-upload me-2"></i>Upload Your First Artwork
+                </a>
+            {% else %}
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Join Now
+                    </a>
+                    <a href="{{ url_for('gallery') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-images me-2"></i>Explore Gallery
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
