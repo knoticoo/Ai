@@ -137,6 +137,43 @@ class AIAnalyzer:
         except Exception as e:
             return None, f"Error during redrawing: {str(e)}"
 
+    def apply_style_transfer(self, image_path, style_name):
+        """Apply artistic style transfer to an image"""
+        try:
+            # Load image
+            image = cv2.imread(image_path)
+            if image is None:
+                return None, "Unable to load image for style transfer."
+            
+            # Apply different artistic styles based on style_name
+            if style_name == 'van_gogh':
+                styled_image = self._apply_van_gogh_style(image)
+            elif style_name == 'picasso':
+                styled_image = self._apply_picasso_style(image)
+            elif style_name == 'monet':
+                styled_image = self._apply_monet_style(image)
+            elif style_name == 'dali':
+                styled_image = self._apply_dali_style(image)
+            elif style_name == 'watercolor':
+                styled_image = self._apply_watercolor_style(image)
+            elif style_name == 'oil_painting':
+                styled_image = self._apply_oil_painting_style(image)
+            elif style_name == 'sketch':
+                styled_image = self._apply_sketch_style(image)
+            elif style_name == 'anime':
+                styled_image = self._apply_anime_style(image)
+            else:
+                return None, f"Unknown style: {style_name}"
+            
+            # Convert to base64 for display
+            _, buffer = cv2.imencode('.jpg', styled_image)
+            img_base64 = base64.b64encode(buffer).decode('utf-8')
+            
+            return img_base64, f"Successfully applied {style_name.replace('_', ' ').title()} style!"
+            
+        except Exception as e:
+            return None, f"Error during style transfer: {str(e)}"
+
     def _analyze_composition(self, image):
         """Analyze composition aspects"""
         height, width = image.shape[:2]
@@ -306,3 +343,266 @@ class AIAnalyzer:
             result[:, :, i] = result[:, :, i] * mask
         
         return result
+
+    def _apply_van_gogh_style(self, image):
+        """Apply Van Gogh swirling brush stroke style"""
+        # Blur the image slightly
+        blurred = cv2.GaussianBlur(image, (3, 3), 0)
+        
+        # Apply artistic edge enhancement
+        gray = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
+        edges = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 7, 7)
+        edges = cv2.cvtColor(edges, cv2.COLOR_GRAY_BGR)
+        
+        # Create swirling effect
+        rows, cols = image.shape[:2]
+        center_x, center_y = cols // 2, rows // 2
+        
+        # Apply color enhancement (Van Gogh loved bold colors)
+        hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+        hsv[:,:,1] = cv2.multiply(hsv[:,:,1], 1.3)  # Increase saturation
+        hsv[:,:,2] = cv2.multiply(hsv[:,:,2], 1.1)  # Increase brightness
+        enhanced = cv2.cvtColor(hsv, cv2.COLOR_HSV_BGR)
+        
+        # Combine with edges for brush stroke effect
+        result = cv2.bitwise_and(enhanced, edges)
+        result = cv2.addWeighted(enhanced, 0.8, result, 0.2, 0)
+        
+        return result
+
+    def _apply_picasso_style(self, image):
+        """Apply Picasso cubist geometric style"""
+        # Convert to different color spaces for geometric effects
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        
+        # Apply bilateral filter for cartoon-like effect
+        cartoon = cv2.bilateralFilter(image, 15, 80, 80)
+        
+        # Create geometric edges
+        gray = cv2.cvtColor(cartoon, cv2.COLOR_BGR2GRAY)
+        edges = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 9, 9)
+        edges = cv2.cvtColor(edges, cv2.COLOR_GRAY_BGR)
+        
+        # Apply color quantization for geometric color blocks
+        data = cartoon.reshape((-1, 3))
+        data = np.float32(data)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 8, 1.0)
+        _, labels, centers = cv2.kmeans(data, 8, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+        centers = np.uint8(centers)
+        quantized = centers[labels.flatten()].reshape(cartoon.shape)
+        
+        # Combine quantized colors with edges
+        result = cv2.bitwise_and(quantized, edges)
+        result = cv2.addWeighted(quantized, 0.9, result, 0.1, 0)
+        
+        return result
+
+    def _apply_monet_style(self, image):
+        """Apply Monet impressionist style"""
+        # Apply Gaussian blur for soft impressionist effect
+        soft = cv2.GaussianBlur(image, (5, 5), 0)
+        
+        # Enhance colors for impressionist palette
+        hsv = cv2.cvtColor(soft, cv2.COLOR_BGR2HSV)
+        hsv[:,:,1] = cv2.multiply(hsv[:,:,1], 1.2)  # Increase saturation
+        hsv[:,:,2] = cv2.add(hsv[:,:,2], 20)  # Increase brightness
+        enhanced = cv2.cvtColor(hsv, cv2.COLOR_HSV_BGR)
+        
+        # Apply light impressionist texture
+        kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+        sharpened = cv2.filter2D(enhanced, -1, kernel)
+        
+        # Blend for soft impressionist look
+        result = cv2.addWeighted(enhanced, 0.7, sharpened, 0.3, 0)
+        
+        return result
+
+    def _apply_watercolor_style(self, image):
+        """Apply watercolor painting style"""
+        # Apply multiple bilateral filters for watercolor effect
+        watercolor = image.copy()
+        for _ in range(3):
+            watercolor = cv2.bilateralFilter(watercolor, 9, 200, 200)
+        
+        # Create soft edges
+        gray = cv2.cvtColor(watercolor, cv2.COLOR_BGR2GRAY)
+        edges = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 7, 7)
+        edges = cv2.cvtColor(edges, cv2.COLOR_GRAY_BGR)
+        
+        # Apply watercolor blending
+        result = cv2.bitwise_and(watercolor, edges)
+        result = cv2.addWeighted(watercolor, 0.85, result, 0.15, 0)
+        
+        return result
+
+    def _apply_sketch_style(self, image):
+        """Apply pencil sketch style"""
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        # Invert the image
+        inverted = 255 - gray
+        
+        # Apply Gaussian blur
+        blurred = cv2.GaussianBlur(inverted, (25, 25), 0)
+        
+        # Create sketch by dividing
+        sketch = cv2.divide(gray, 255 - blurred, scale=256)
+        
+        # Convert back to BGR for consistency
+        result = cv2.cvtColor(sketch, cv2.COLOR_GRAY_BGR)
+        
+        return result
+
+    def _apply_dali_style(self, image):
+        """Apply Salvador Dali surrealist style"""
+        # Apply dream-like distortions
+        rows, cols = image.shape[:2]
+        
+        # Create wave distortion effect
+        map_x = np.zeros((rows, cols), dtype=np.float32)
+        map_y = np.zeros((rows, cols), dtype=np.float32)
+        
+        for i in range(rows):
+            for j in range(cols):
+                map_x[i, j] = j + 10 * np.sin(i / 20.0)
+                map_y[i, j] = i + 10 * np.cos(j / 20.0)
+        
+        distorted = cv2.remap(image, map_x, map_y, cv2.INTER_LINEAR)
+        
+        # Apply surreal color enhancement
+        hsv = cv2.cvtColor(distorted, cv2.COLOR_BGR2HSV)
+        hsv[:,:,0] = cv2.add(hsv[:,:,0], 20)  # Shift hue
+        hsv[:,:,1] = cv2.multiply(hsv[:,:,1], 1.4)  # Increase saturation
+        result = cv2.cvtColor(hsv, cv2.COLOR_HSV_BGR)
+        
+        return result
+
+    def _apply_oil_painting_style(self, image):
+        """Apply oil painting style"""
+        # Apply oil painting effect using bilateral filter
+        oil_painting = image.copy()
+        
+        # Multiple iterations for oil painting texture
+        for _ in range(2):
+            oil_painting = cv2.bilateralFilter(oil_painting, 9, 100, 100)
+        
+        # Apply texture enhancement
+        kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
+        textured = cv2.filter2D(oil_painting, -1, kernel)
+        
+        # Blend for oil painting effect
+        result = cv2.addWeighted(oil_painting, 0.8, textured, 0.2, 0)
+        
+        return result
+
+    def _apply_anime_style(self, image):
+        """Apply anime-style filter"""
+        # Convert to LAB color space for better color manipulation
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        
+        # Apply bilateral filter for soft, painterly effect
+        cartoon = cv2.bilateralFilter(image, 15, 80, 80)
+        
+        # Enhance colors for anime palette
+        hsv = cv2.cvtColor(cartoon, cv2.COLOR_BGR2HSV)
+        hsv[:,:,1] = cv2.multiply(hsv[:,:,1], 1.3)  # Increase saturation
+        hsv[:,:,2] = cv2.multiply(hsv[:,:,2], 1.1)  # Increase brightness
+        enhanced = cv2.cvtColor(hsv, cv2.COLOR_HSV_BGR)
+        
+        # Apply light anime texture
+        kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+        sharpened = cv2.filter2D(enhanced, -1, kernel)
+        
+        # Blend for soft anime look
+        result = cv2.addWeighted(enhanced, 0.7, sharpened, 0.3, 0)
+        
+        return result
+
+    def generate_color_palette(self, image_path, palette_type='harmonious'):
+        """Generate color palettes based on mood/theme"""
+        try:
+            image = cv2.imread(image_path)
+            if image is None:
+                return None, "Unable to load image for palette generation."
+            
+            # Extract dominant colors
+            data = image.reshape((-1, 3))
+            data = np.float32(data)
+            
+            # Use K-means to find dominant colors
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 8, 1.0)
+            _, labels, centers = cv2.kmeans(data, 5, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+            
+            # Convert to hex colors
+            colors = []
+            for center in centers:
+                # Convert BGR to RGB then to hex
+                b, g, r = center.astype(int)
+                hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                colors.append(hex_color)
+            
+            # Generate palette based on type
+            if palette_type == 'complementary':
+                palette = self._generate_complementary_palette(colors[0])
+            elif palette_type == 'analogous':
+                palette = self._generate_analogous_palette(colors[0])
+            elif palette_type == 'triadic':
+                palette = self._generate_triadic_palette(colors[0])
+            elif palette_type == 'monochromatic':
+                palette = self._generate_monochromatic_palette(colors[0])
+            else:  # harmonious (default)
+                palette = colors
+            
+            return {
+                'palette': palette,
+                'type': palette_type,
+                'dominant_colors': colors
+            }, "Color palette generated successfully!"
+            
+        except Exception as e:
+            return None, f"Error generating palette: {str(e)}"
+
+    def _generate_complementary_palette(self, base_color):
+        """Generate complementary color palette"""
+        # This is a simplified complementary palette generator
+        # In a real implementation, you'd use proper color theory
+        palettes = [
+            ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FCEA2B'],
+            ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6'],
+            ['#FF7675', '#74B9FF', '#00B894', '#FDCB6E', '#6C5CE7']
+        ]
+        return palettes[hash(base_color) % len(palettes)]
+
+    def _generate_analogous_palette(self, base_color):
+        """Generate analogous color palette"""
+        # This is a simplified analogous palette generator
+        # In a real implementation, you'd use proper color theory
+        palettes = [
+            ['#FF6B35', '#F7931E', '#FFD23F'],
+            ['#006994', '#1E90FF', '#87CEEB'],
+            ['#228B22', '#32CD32', '#006400']
+        ]
+        return palettes[hash(base_color) % len(palettes)]
+
+    def _generate_triadic_palette(self, base_color):
+        """Generate triadic color palette"""
+        # This is a simplified triadic palette generator
+        # In a real implementation, you'd use proper color theory
+        palettes = [
+            ['#FF6B35', '#F7931E', '#FFD23F'],
+            ['#006994', '#1E90FF', '#87CEEB'],
+            ['#228B22', '#32CD32', '#006400']
+        ]
+        return palettes[hash(base_color) % len(palettes)]
+
+    def _generate_monochromatic_palette(self, base_color):
+        """Generate monochromatic color palette"""
+        # This is a simplified monochromatic palette generator
+        # In a real implementation, you'd use proper color theory
+        palettes = [
+            ['#FF6B35', '#F7931E', '#FFD23F'],
+            ['#006994', '#1E90FF', '#87CEEB'],
+            ['#228B22', '#32CD32', '#006400']
+        ]
+        return palettes[hash(base_color) % len(palettes)]

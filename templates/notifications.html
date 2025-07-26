@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">🔔 Notifications</h1>
+        <p class="lead text-muted">Stay updated with your latest interactions and achievements</p>
+        
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('activity_feed') }}">Community</a></li>
+                <li class="breadcrumb-item active">Notifications</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <!-- Notification Actions -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Your Notifications</h4>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="markAllRead()">
+                        <i class="fas fa-check-double me-1"></i>Mark All Read
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="clearOldNotifications()">
+                        <i class="fas fa-trash me-1"></i>Clear Old
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notifications List -->
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            {% if notifications %}
+            <div class="notifications-container">
+                {% for notification in notifications %}
+                <div class="notification-item {% if not notification.is_read %}unread{% endif %}" 
+                     data-notification-id="{{ notification.id }}">
+                    
+                    <!-- Notification Icon -->
+                    <div class="notification-icon">
+                        {% if notification.type == 'like' %}
+                            <i class="fas fa-heart text-danger"></i>
+                        {% elif notification.type == 'comment' %}
+                            <i class="fas fa-comment text-info"></i>
+                        {% elif notification.type == 'follow' %}
+                            <i class="fas fa-user-plus text-success"></i>
+                        {% elif notification.type == 'achievement' %}
+                            <i class="fas fa-trophy text-warning"></i>
+                        {% elif notification.type == 'battle_win' %}
+                            <i class="fas fa-crown text-gold"></i>
+                        {% elif notification.type == 'battle_vote' %}
+                            <i class="fas fa-vote-yea text-primary"></i>
+                        {% elif notification.type == 'forum_reply' %}
+                            <i class="fas fa-reply text-secondary"></i>
+                        {% elif notification.type == 'mention' %}
+                            <i class="fas fa-at text-purple"></i>
+                        {% else %}
+                            <i class="fas fa-bell text-muted"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Notification Content -->
+                    <div class="notification-content">
+                        <div class="notification-header">
+                            <h6 class="notification-title">{{ notification.title }}</h6>
+                            <span class="notification-time">
+                                {{ notification.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                            </span>
+                        </div>
+                        
+                        <div class="notification-message">
+                            {{ notification.message }}
+                        </div>
+                        
+                        <!-- Related User Display -->
+                        {% if notification.related_user %}
+                        <div class="notification-user mt-2">
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2">
+                                    {{ notification.related_user.username[0].upper() }}
+                                </div>
+                                <small class="text-muted">
+                                    from {{ notification.related_user.username }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Action Buttons -->
+                        <div class="notification-actions mt-2">
+                            {% if notification.url %}
+                            <a href="{{ notification.url }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>View
+                            </a>
+                            {% endif %}
+                            
+                            {% if notification.type == 'follow' and notification.related_user %}
+                            <button class="btn btn-sm btn-outline-success ms-1" 
+                                    onclick="followUser({{ notification.related_user.id }})">
+                                <i class="fas fa-user-plus me-1"></i>Follow Back
+                            </button>
+                            {% endif %}
+                            
+                            <button class="btn btn-sm btn-outline-secondary ms-1" 
+                                    onclick="dismissNotification({{ notification.id }})">
+                                <i class="fas fa-times me-1"></i>Dismiss
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Unread Indicator -->
+                    {% if not notification.is_read %}
+                    <div class="unread-indicator"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Load More -->
+            {% if notifications|length >= 50 %}
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-primary" onclick="loadMoreNotifications()">
+                    <i class="fas fa-plus me-2"></i>Load More Notifications
+                </button>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <!-- Empty State -->
+            <div class="empty-notifications text-center py-5">
+                <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No Notifications Yet</h5>
+                <p class="text-muted">You'll see notifications here when people interact with your content or follow you.</p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('upload_artwork') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-upload me-2"></i>Upload Artwork
+                    </a>
+                    <a href="{{ url_for('discover_users') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-users me-2"></i>Discover Artists
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.notifications-container {
+    max-width: 100%;
+}
+
+.notification-item {
+    display: flex;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.notification-item.unread {
+    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+    border-color: #007bff;
+    border-left: 4px solid #007bff;
+}
+
+.notification-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    font-size: 1.2rem;
+}
+
+.notification-content {
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.notification-title {
+    font-weight: 600;
+    margin: 0;
+    color: #495057;
+    flex: 1;
+}
+
+.notification-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+    white-space: nowrap;
+    margin-left: 1rem;
+}
+
+.notification-message {
+    color: #6c757d;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+}
+
+.notification-user .user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.notification-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.unread-indicator {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 8px;
+    height: 8px;
+    background: #007bff;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(0, 123, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+/* Notification type specific styling */
+.notification-item[data-notification-type="achievement"] .notification-icon {
+    background: linear-gradient(45deg, #ffc107, #ffed4e);
+    border-color: #ffc107;
+}
+
+.notification-item[data-notification-type="like"] .notification-icon {
+    background: linear-gradient(45deg, #dc3545, #ff6b7a);
+    border-color: #dc3545;
+}
+
+.notification-item[data-notification-type="follow"] .notification-icon {
+    background: linear-gradient(45deg, #28a745, #5cb85c);
+    border-color: #28a745;
+}
+
+.notification-item[data-notification-type="comment"] .notification-icon {
+    background: linear-gradient(45deg, #17a2b8, #5bc0de);
+    border-color: #17a2b8;
+}
+
+.text-gold {
+    color: #ffc107 !important;
+}
+
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+.empty-notifications {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+}
+
+@media (max-width: 768px) {
+    .notification-item {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .notification-content {
+        margin-left: 0.75rem;
+    }
+    
+    .notification-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .notification-time {
+        margin-left: 0;
+        margin-top: 0.25rem;
+    }
+    
+    .notification-actions {
+        margin-top: 0.75rem;
+    }
+}
+
+/* Animation for new notifications */
+.notification-item.new-notification {
+    animation: slideInAndGlow 0.5s ease-out;
+}
+
+@keyframes slideInAndGlow {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+}
+</style>
+
+<script>
+function markAllRead() {
+    fetch('/notifications/mark_all_read', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove unread styling from all notifications
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+                const indicator = item.querySelector('.unread-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            });
+            
+            showToast('All notifications marked as read', 'success');
+        } else {
+            showToast('Failed to mark notifications as read', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred', 'error');
+    });
+}
+
+function dismissNotification(notificationId) {
+    const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+    
+    fetch(`/notifications/dismiss/${notificationId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Animate removal
+            notificationElement.style.opacity = '0';
+            notificationElement.style.transform = 'translateX(100px)';
+            
+            setTimeout(() => {
+                notificationElement.remove();
+                
+                // Check if no notifications left
+                if (document.querySelectorAll('.notification-item').length === 0) {
+                    location.reload();
+                }
+            }, 300);
+        } else {
+            showToast('Failed to dismiss notification', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred', 'error');
+    });
+}
+
+function clearOldNotifications() {
+    if (confirm('Are you sure you want to clear all read notifications older than 7 days?')) {
+        fetch('/notifications/clear_old', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`${data.cleared_count} old notifications cleared`, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showToast('Failed to clear old notifications', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred', 'error');
+        });
+    }
+}
+
+function followUser(userId) {
+    fetch(`/follow/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Update button to show followed state
+            event.target.innerHTML = '<i class="fas fa-check me-1"></i>Following';
+            event.target.classList.remove('btn-outline-success');
+            event.target.classList.add('btn-success');
+            event.target.disabled = true;
+        } else {
+            showToast('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while following the user', 'error');
+    });
+}
+
+function loadMoreNotifications() {
+    // This would implement pagination for loading more notifications
+    showToast('Load more functionality would be implemented here!', 'info');
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 5000);
+}
+
+// Auto-refresh notifications every 30 seconds
+setInterval(() => {
+    // Could implement auto-refresh here
+}, 30000);
+
+// Add notification count to page title
+const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+if (unreadCount > 0) {
+    document.title = `(${unreadCount}) Notifications - ArtAI`;
+}
+</script>
+{% endblock %}

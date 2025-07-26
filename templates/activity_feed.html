@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+
+{% block title %}Community Feed - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">🌟 Community Feed</h1>
+        <p class="lead text-muted">Stay connected with the latest activities from artists you follow</p>
+        
+        {% if current_user.is_authenticated %}
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{{ url_for('notifications') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-bell me-2"></i>Notifications
+                        {% if current_user.notifications.filter_by(is_read=False).count() > 0 %}
+                        <span class="badge bg-danger">{{ current_user.notifications.filter_by(is_read=False).count() }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('discover_users') }}" class="btn btn-outline-success">
+                        <i class="fas fa-user-plus me-2"></i>Discover Artists
+                    </a>
+                    <a href="{{ url_for('forum_categories') }}" class="btn btn-outline-info">
+                        <i class="fas fa-comments me-2"></i>Forum
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Stats -->
+    {% if current_user.is_authenticated %}
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body">
+                    <h5 class="card-title">{{ current_user.artworks|length }}</h5>
+                    <p class="card-text">Your Artworks</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    {% set following_count = current_user.following.count() if current_user.following else 0 %}
+                    <h5 class="card-title">{{ following_count }}</h5>
+                    <p class="card-text">Following</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    {% set followers_count = current_user.followers.count() if current_user.followers else 0 %}
+                    <h5 class="card-title">{{ followers_count }}</h5>
+                    <p class="card-text">Followers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark text-center">
+                <div class="card-body">
+                    <h5 class="card-title">{{ current_user.level }}</h5>
+                    <p class="card-text">Level</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Activity Feed -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-stream me-2 text-primary"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if activities %}
+                    <div class="activity-timeline">
+                        {% for activity in activities %}
+                        <div class="activity-item" data-activity-type="{{ activity.action_type }}">
+                            <div class="activity-icon">
+                                {% if activity.action_type == 'upload' %}
+                                    <i class="fas fa-upload text-primary"></i>
+                                {% elif activity.action_type == 'like' %}
+                                    <i class="fas fa-heart text-danger"></i>
+                                {% elif activity.action_type == 'comment' %}
+                                    <i class="fas fa-comment text-info"></i>
+                                {% elif activity.action_type == 'follow' %}
+                                    <i class="fas fa-user-plus text-success"></i>
+                                {% elif activity.action_type == 'battle_join' %}
+                                    <i class="fas fa-sword text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-circle text-secondary"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <strong>{{ activity.user.username }}</strong>
+                                    <span class="activity-action">
+                                        {% if activity.action_type == 'upload' %}
+                                            uploaded a new artwork
+                                        {% elif activity.action_type == 'like' %}
+                                            liked an artwork
+                                        {% elif activity.action_type == 'comment' %}
+                                            commented on a post
+                                        {% elif activity.action_type == 'follow' %}
+                                            followed a user
+                                        {% elif activity.action_type == 'battle_join' %}
+                                            joined an art battle
+                                        {% else %}
+                                            {{ activity.action_type }}
+                                        {% endif %}
+                                    </span>
+                                    <span class="activity-time text-muted">
+                                        {{ activity.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                                    </span>
+                                </div>
+                                
+                                <div class="activity-message">
+                                    {{ activity.message }}
+                                </div>
+                                
+                                <!-- Activity Preview -->
+                                {% if activity.target_type == 'artwork' and activity.target_id %}
+                                {% set artwork = get_artwork_by_id(activity.target_id) %}
+                                {% if artwork %}
+                                <div class="activity-preview mt-2">
+                                    <div class="row">
+                                        <div class="col-auto">
+                                            <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                                                 class="preview-img" alt="{{ artwork.title }}">
+                                        </div>
+                                        <div class="col">
+                                            <h6 class="mb-1">{{ artwork.title }}</h6>
+                                            <p class="text-muted small mb-1">{{ artwork.description[:80] }}{% if artwork.description|length > 80 %}...{% endif %}</p>
+                                            <a href="{{ url_for('artwork_detail', artwork_id=artwork.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                                
+                                <!-- User Preview for Follows -->
+                                {% if activity.target_type == 'user' and activity.target_id %}
+                                {% set target_user = get_user_by_id(activity.target_id) %}
+                                {% if target_user %}
+                                <div class="activity-preview mt-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <div class="user-avatar">
+                                                {{ target_user.username[0].upper() }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">{{ target_user.username }}</h6>
+                                            <p class="text-muted small mb-1">Level {{ target_user.level }} • {{ target_user.artworks|length }} artworks</p>
+                                            <a href="{{ url_for('profile', username=target_user.username) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-user me-1"></i>Profile
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Load More Button -->
+                    {% if activities|length >= 20 %}
+                    <div class="text-center mt-4">
+                        <button class="btn btn-outline-primary" onclick="loadMoreActivities()">
+                            <i class="fas fa-plus me-2"></i>Load More Activities
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <!-- Empty State -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-stream fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Activities Yet</h5>
+                        {% if current_user.is_authenticated %}
+                        <p class="text-muted">Follow some artists to see their activities here!</p>
+                        <a href="{{ url_for('discover_users') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i>Discover Artists
+                        </a>
+                        {% else %}
+                        <p class="text-muted">Join the community to see activities from amazing artists!</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i>Join ArtAI
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Trending Artists -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-fire me-2 text-danger"></i>Trending Artists
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- This would be populated with trending artists -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="user-avatar bg-primary me-2">K</div>
+                        <div>
+                            <h6 class="mb-0">Knotico</h6>
+                            <small class="text-muted">Admin • Level 10</small>
+                        </div>
+                        {% if current_user.is_authenticated and current_user.username != 'Knotico' %}
+                        <button class="btn btn-sm btn-outline-primary ms-auto" onclick="followUser(1)">
+                            Follow
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('discover_users') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-users me-1"></i>Discover More
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            {% if current_user.is_authenticated %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('upload_artwork') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-upload me-2"></i>Upload Artwork
+                        </a>
+                        <a href="{{ url_for('battles') }}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-sword me-2"></i>Join Battle
+                        </a>
+                        <a href="{{ url_for('forum') }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-comments me-2"></i>New Forum Post
+                        </a>
+                        <a href="{{ url_for('challenges') }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-trophy me-2"></i>View Challenges
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Recent Forum Posts -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-comments me-2 text-info"></i>Recent Forum Posts
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- This would be populated with recent forum posts -->
+                    <div class="small text-muted text-center py-3">
+                        Check the <a href="{{ url_for('forum') }}">forum</a> for discussions!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.activity-timeline {
+    position: relative;
+}
+
+.activity-item {
+    display: flex;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.activity-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 40px;
+    width: 2px;
+    height: calc(100% + 1rem);
+    background: #e9ecef;
+    z-index: 1;
+}
+
+.activity-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.activity-content {
+    flex: 1;
+    margin-left: 1rem;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.activity-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.activity-action {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    margin-left: auto;
+}
+
+.activity-message {
+    font-size: 0.95rem;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.activity-preview {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.preview-img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    background: #007bff;
+}
+
+/* Activity type specific colors */
+.activity-item[data-activity-type="upload"] .activity-icon {
+    background: #e7f3ff;
+    border-color: #007bff;
+}
+
+.activity-item[data-activity-type="like"] .activity-icon {
+    background: #ffeaea;
+    border-color: #dc3545;
+}
+
+.activity-item[data-activity-type="comment"] .activity-icon {
+    background: #e7f6ff;
+    border-color: #17a2b8;
+}
+
+.activity-item[data-activity-type="follow"] .activity-icon {
+    background: #eafaf1;
+    border-color: #28a745;
+}
+
+.activity-item[data-activity-type="battle_join"] .activity-icon {
+    background: #fff8e1;
+    border-color: #ffc107;
+}
+
+@media (max-width: 768px) {
+    .activity-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .activity-time {
+        margin-left: 0;
+    }
+    
+    .activity-content {
+        margin-left: 0.5rem;
+        padding: 0.75rem;
+    }
+}
+</style>
+
+<script>
+function followUser(userId) {
+    fetch(`/follow/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while following the user.');
+    });
+}
+
+function loadMoreActivities() {
+    // This would implement pagination for loading more activities
+    alert('Load more functionality would be implemented here!');
+}
+
+// Auto-refresh feed every 5 minutes
+{% if current_user.is_authenticated %}
+setInterval(() => {
+    // Could implement auto-refresh here
+}, 300000);
+{% endif %}
+</script>
+{% endblock %}

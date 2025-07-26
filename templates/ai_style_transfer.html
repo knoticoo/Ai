@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}AI Style Transfer - {{ artwork.title }} - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">🎨 AI Style Transfer</h1>
+        <p class="lead text-muted">Transform your artwork with famous artistic styles</p>
+        
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('gallery') }}">Gallery</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('artwork_detail', artwork_id=artwork.id) }}">{{ artwork.title }}</a></li>
+                <li class="breadcrumb-item active">Style Transfer</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <!-- Original Artwork Display -->
+    <div class="row mb-5">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-image me-2 text-primary"></i>Original Artwork
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                         class="img-fluid rounded" alt="{{ artwork.title }}" id="originalImage">
+                    <div class="mt-3">
+                        <h5>{{ artwork.title }}</h5>
+                        <p class="text-muted">by {{ artwork.artist.username }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-magic me-2 text-warning"></i>Styled Result
+                    </h4>
+                </div>
+                <div class="card-body" id="styledResultContainer">
+                    <div class="text-center py-5" id="placeholderText">
+                        <i class="fas fa-palette fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Select a style below to transform your artwork</h5>
+                        <p class="text-muted">Your AI-styled artwork will appear here</p>
+                    </div>
+                    
+                    <div id="styledImageContainer" style="display: none;">
+                        <img id="styledImage" class="img-fluid rounded" alt="Styled artwork">
+                        <div class="mt-3" id="styledInfo">
+                            <h5 id="styledTitle"></h5>
+                            <p class="text-success" id="styledMessage"></p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm" onclick="downloadStyledImage()">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="resetView()">
+                                    <i class="fas fa-undo me-1"></i>Try Another Style
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" style="display: none;">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Processing...</span>
+                            </div>
+                            <h5 class="mt-3">Applying artistic style...</h5>
+                            <p class="text-muted">This may take a few moments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Style Selection -->
+    <div class="mb-5">
+        <h3 class="text-center mb-4">Choose Your Artistic Style</h3>
+        <div class="row g-4">
+            {% for style in styles %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card style-card h-100" onclick="applyStyle('{{ style.id }}', '{{ style.name }}')">
+                    <div class="card-body text-center">
+                        <div class="style-icon mb-3">
+                            {% if style.id == 'van_gogh' %}
+                                <i class="fas fa-swatchbook fa-3x text-warning"></i>
+                            {% elif style.id == 'picasso' %}
+                                <i class="fas fa-shapes fa-3x text-info"></i>
+                            {% elif style.id == 'monet' %}
+                                <i class="fas fa-cloud fa-3x text-primary"></i>
+                            {% elif style.id == 'dali' %}
+                                <i class="fas fa-eye fa-3x text-danger"></i>
+                            {% elif style.id == 'watercolor' %}
+                                <i class="fas fa-tint fa-3x text-success"></i>
+                            {% elif style.id == 'oil_painting' %}
+                                <i class="fas fa-brush fa-3x text-dark"></i>
+                            {% elif style.id == 'sketch' %}
+                                <i class="fas fa-pencil-alt fa-3x text-secondary"></i>
+                            {% elif style.id == 'anime' %}
+                                <i class="fas fa-star fa-3x text-pink"></i>
+                            {% endif %}
+                        </div>
+                        <h5 class="style-title">{{ style.name }}</h5>
+                        <p class="style-description text-muted">{{ style.description }}</p>
+                        <div class="style-button">
+                            <span class="btn btn-outline-primary btn-sm">Apply Style</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Color Palette Generator -->
+    <div class="mb-5">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-palette me-2 text-info"></i>Color Palette Generator
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Extract and generate color palettes from your artwork</p>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Palette Type:</label>
+                        <select class="form-select" id="paletteType">
+                            <option value="harmonious">Harmonious (Dominant Colors)</option>
+                            <option value="complementary">Complementary</option>
+                            <option value="analogous">Analogous</option>
+                            <option value="triadic">Triadic</option>
+                            <option value="monochromatic">Monochromatic</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-info" onclick="generatePalette()">
+                            <i class="fas fa-magic me-2"></i>Generate Palette
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Palette Display -->
+                <div id="paletteContainer" style="display: none;">
+                    <h6>Generated Palette:</h6>
+                    <div id="paletteColors" class="d-flex gap-2 mb-3"></div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyPalette()">
+                        <i class="fas fa-copy me-1"></i>Copy Hex Codes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back Button -->
+    <div class="text-center">
+        <a href="{{ url_for('artwork_detail', artwork_id=artwork.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Artwork
+        </a>
+    </div>
+</div>
+
+<style>
+.style-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.style-card:hover {
+    transform: translateY(-5px);
+    border-color: #007bff;
+    box-shadow: 0 8px 25px rgba(0,123,255,0.15);
+}
+
+.style-card:hover .style-button .btn {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.style-icon {
+    margin-bottom: 1rem;
+}
+
+.style-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.style-description {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+}
+
+.text-pink {
+    color: #e91e63 !important;
+}
+
+.palette-color {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.palette-color:hover {
+    transform: scale(1.1);
+}
+
+.palette-color-label {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.palette-color:hover .palette-color-label {
+    opacity: 1;
+}
+
+#styledImage {
+    max-height: 400px;
+    object-fit: contain;
+}
+
+#originalImage {
+    max-height: 400px;
+    object-fit: contain;
+}
+</style>
+
+<script>
+let currentStyledImage = null;
+let currentStyleName = null;
+
+function applyStyle(styleId, styleName) {
+    // Show loading spinner
+    document.getElementById('placeholderText').style.display = 'none';
+    document.getElementById('styledImageContainer').style.display = 'none';
+    document.getElementById('loadingSpinner').style.display = 'block';
+    
+    // Make API call
+    fetch(`/apply_style/{{ artwork.id }}/${styleId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            
+            if (data.success) {
+                // Display styled image
+                const styledImg = document.getElementById('styledImage');
+                styledImg.src = `data:image/jpeg;base64,${data.styled_image}`;
+                
+                document.getElementById('styledTitle').textContent = `${styleName} Style Applied`;
+                document.getElementById('styledMessage').textContent = data.message;
+                document.getElementById('styledImageContainer').style.display = 'block';
+                
+                // Store for download
+                currentStyledImage = data.styled_image;
+                currentStyleName = styleId;
+            } else {
+                alert('Error: ' + data.error);
+                document.getElementById('placeholderText').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('placeholderText').style.display = 'block';
+            alert('An error occurred while applying the style.');
+        });
+}
+
+function resetView() {
+    document.getElementById('styledImageContainer').style.display = 'none';
+    document.getElementById('placeholderText').style.display = 'block';
+    currentStyledImage = null;
+    currentStyleName = null;
+}
+
+function downloadStyledImage() {
+    if (currentStyledImage) {
+        const link = document.createElement('a');
+        link.href = `data:image/jpeg;base64,${currentStyledImage}`;
+        link.download = `{{ artwork.title }}_${currentStyleName}_style.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+function generatePalette() {
+    const paletteType = document.getElementById('paletteType').value;
+    
+    fetch(`/color_palette/{{ artwork.id }}?type=${paletteType}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayPalette(data.palette);
+            } else {
+                alert('Error generating palette: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while generating the palette.');
+        });
+}
+
+function displayPalette(paletteData) {
+    const container = document.getElementById('paletteColors');
+    container.innerHTML = '';
+    
+    const colors = paletteData.palette || paletteData.dominant_colors;
+    
+    colors.forEach(color => {
+        const colorDiv = document.createElement('div');
+        colorDiv.className = 'palette-color';
+        colorDiv.style.backgroundColor = color;
+        colorDiv.setAttribute('data-color', color);
+        
+        const label = document.createElement('div');
+        label.className = 'palette-color-label';
+        label.textContent = color;
+        colorDiv.appendChild(label);
+        
+        colorDiv.onclick = () => {
+            navigator.clipboard.writeText(color);
+            alert(`Copied ${color} to clipboard!`);
+        };
+        
+        container.appendChild(colorDiv);
+    });
+    
+    document.getElementById('paletteContainer').style.display = 'block';
+}
+
+function copyPalette() {
+    const colors = Array.from(document.querySelectorAll('.palette-color')).map(div => div.getAttribute('data-color'));
+    const paletteText = colors.join(', ');
+    
+    navigator.clipboard.writeText(paletteText).then(() => {
+        alert('Palette copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}
