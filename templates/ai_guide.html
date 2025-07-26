@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ learning_path.title }} - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h1 class="h2 mb-2">{{ learning_path.title }}</h1>
+                            <span class="badge bg-primary">{{ learning_path.difficulty }}</span>
+                        </div>
+                        <a href="{{ url_for('roadmap') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Roadmap
+                        </a>
+                    </div>
+                    
+                    <div class="guide-content">
+                        {{ guide_content|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>About This Guide
+                    </h5>
+                    <p class="card-text">{{ learning_path.description }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-sort-numeric-up me-1"></i>Level {{ learning_path.order }}
+                        </small>
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>AI Generated
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>Quick Tips
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Take notes as you read
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Practice the exercises mentioned
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Don't rush - take your time
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Apply what you learn to your own work
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.guide-content {
+    line-height: 1.8;
+    color: var(--text-color);
+}
+
+.guide-content h1, .guide-content h2, .guide-content h3, .guide-content h4, .guide-content h5, .guide-content h6 {
+    color: var(--dark-color);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.guide-content h1 {
+    font-size: 2rem;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.guide-content h2 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.guide-content h3 {
+    font-size: 1.25rem;
+    color: var(--secondary-color);
+}
+
+.guide-content p {
+    margin-bottom: 1rem;
+}
+
+.guide-content ul, .guide-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.guide-content li {
+    margin-bottom: 0.5rem;
+}
+
+.guide-content strong {
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.guide-content em {
+    color: var(--secondary-color);
+    font-style: italic;
+}
+</style>
+{% endblock %}
