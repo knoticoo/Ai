@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Achievements - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">🏆 Achievements</h1>
+        <p class="lead text-muted">Unlock rewards and show off your artistic journey</p>
+        
+        {% if current_user.is_authenticated %}
+        <div class="row text-center mt-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <i class="fas fa-trophy fa-2x mb-2"></i>
+                        <h4>{{ current_user.user_achievements|length }}</h4>
+                        <small>Achievements Earned</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <i class="fas fa-star fa-2x mb-2"></i>
+                        <h4>{{ current_user.experience }}</h4>
+                        <small>Experience Points</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <i class="fas fa-fire fa-2x mb-2"></i>
+                        <h4>{{ current_user.stats.daily_streak if current_user.stats else 0 }}</h4>
+                        <small>Current Streak</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <i class="fas fa-level-up-alt fa-2x mb-2"></i>
+                        <h4>{{ current_user.level }}</h4>
+                        <small>Artist Level</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Achievement Categories -->
+    <div class="row">
+        {% set categories = achievements|groupby('category') %}
+        {% for category, category_achievements in categories %}
+        <div class="col-12 mb-5">
+            <h3 class="border-bottom pb-2 mb-4">
+                {% if category == 'Milestones' %}
+                    <i class="fas fa-mountain text-primary me-2"></i>
+                {% elif category == 'Social' %}
+                    <i class="fas fa-users text-success me-2"></i>
+                {% elif category == 'Battles' %}
+                    <i class="fas fa-sword-crossed text-danger me-2"></i>
+                {% elif category == 'Streaks' %}
+                    <i class="fas fa-fire text-warning me-2"></i>
+                {% else %}
+                    <i class="fas fa-star text-info me-2"></i>
+                {% endif %}
+                {{ category }}
+            </h3>
+            
+            <div class="row g-4">
+                {% for achievement in category_achievements %}
+                {% set earned = achievement.id in user_achievements %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card achievement-card h-100 {% if earned %}earned{% else %}locked{% endif %}">
+                        <div class="card-body text-center">
+                            <!-- Achievement Icon -->
+                            <div class="achievement-icon mb-3">
+                                {% if earned %}
+                                <i class="{{ achievement.icon }} fa-3x text-warning"></i>
+                                <div class="earned-badge">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                </div>
+                                {% else %}
+                                <i class="{{ achievement.icon }} fa-3x text-muted"></i>
+                                <div class="locked-overlay">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Achievement Info -->
+                            <h5 class="achievement-title {% if not earned %}text-muted{% endif %}">
+                                {{ achievement.name }}
+                            </h5>
+                            <p class="achievement-description {% if not earned %}text-muted{% endif %}">
+                                {{ achievement.description }}
+                            </p>
+                            
+                            <!-- Points Badge -->
+                            <div class="mt-auto">
+                                <span class="badge {% if earned %}bg-warning{% else %}bg-secondary{% endif %} fs-6">
+                                    <i class="fas fa-gem me-1"></i>{{ achievement.points }} XP
+                                </span>
+                            </div>
+                            
+                            <!-- Progress Bar (for applicable achievements) -->
+                            {% if not earned and current_user.is_authenticated %}
+                            <div class="mt-3">
+                                {% set progress = 0 %}
+                                {% if achievement.requirement_type == 'artworks_count' and current_user.stats %}
+                                    {% set progress = (current_user.stats.total_artworks / achievement.requirement_value * 100)|round|int %}
+                                {% elif achievement.requirement_type == 'likes' and current_user.stats %}
+                                    {% set progress = (current_user.stats.total_likes_received / achievement.requirement_value * 100)|round|int %}
+                                {% elif achievement.requirement_type == 'streak' and current_user.stats %}
+                                    {% set progress = (current_user.stats.daily_streak / achievement.requirement_value * 100)|round|int %}
+                                {% endif %}
+                                
+                                {% if progress > 0 %}
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" 
+                                         style="width: {{ progress if progress <= 100 else 100 }}%">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ progress if progress <= 100 else 100 }}% Complete</small>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Call to Action -->
+    {% if not current_user.is_authenticated %}
+    <div class="text-center mt-5">
+        <div class="card bg-light">
+            <div class="card-body py-5">
+                <h4>Ready to Start Your Journey?</h4>
+                <p class="text-muted">Join ArtAI to unlock achievements and track your progress!</p>
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-user-plus me-2"></i>Sign Up
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.achievement-card {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.achievement-card.earned {
+    border: 2px solid #ffc107;
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
+}
+
+.achievement-card.locked {
+    opacity: 0.7;
+}
+
+.achievement-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.achievement-icon {
+    position: relative;
+    display: inline-block;
+}
+
+.earned-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: white;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.locked-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.achievement-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.achievement-description {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+</style>
+{% endblock %}
