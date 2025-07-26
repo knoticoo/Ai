@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Challenge: {{ challenge.title }} - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Challenge Details -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">{{ challenge.title }}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <span class="badge bg-{{ 'success' if challenge.difficulty == 'Beginner' else 'warning' if challenge.difficulty == 'Intermediate' else 'danger' }} fs-6">
+                                {{ challenge.difficulty }}
+                            </span>
+                            <span class="badge bg-info fs-6 ms-2">
+                                <i class="fas fa-star me-1"></i>{{ challenge.reward_exp }} XP
+                            </span>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Started: {{ challenge.start_date.strftime('%B %d, %Y') }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <p class="lead">{{ challenge.description }}</p>
+                    
+                    {% if challenge.requirements %}
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-list-check me-2"></i>Requirements:</h5>
+                        <p class="mb-0">{{ challenge.requirements }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if current_user.is_authenticated %}
+                    <div class="mt-4">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#submitModal">
+                            <i class="fas fa-upload me-2"></i>Submit Artwork
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Please <a href="{{ url_for('login') }}">login</a> to submit artwork for this challenge.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Submissions -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-gallery-thumbnails me-2"></i>
+                        Submissions ({{ submissions|length }})
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if submissions %}
+                    <div class="row">
+                        {% for submission in submissions %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <img src="{{ url_for('static', filename='uploads/' + submission.artwork.filename) }}" 
+                                     class="card-img-top" alt="{{ submission.artwork.title }}"
+                                     style="height: 200px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ submission.artwork.title }}</h6>
+                                    <p class="card-text small text-muted">
+                                        by <a href="{{ url_for('profile', username=submission.user.username) }}">{{ submission.user.username }}</a>
+                                    </p>
+                                    <p class="card-text small">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ submission.submission_date.strftime('%B %d, %Y') }}
+                                    </p>
+                                    {% if submission.is_approved %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Approved
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{{ url_for('artwork_detail', artwork_id=submission.artwork.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-gallery-thumbnails fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No submissions yet</h5>
+                        <p class="text-muted">Be the first to submit artwork for this challenge!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Challenge Stats -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Challenge Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ submissions|length }}</h4>
+                            <small class="text-muted">Submissions</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ submissions|selectattr('is_approved')|list|length }}</h4>
+                            <small class="text-muted">Approved</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Challenges -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Other Challenges</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('challenges') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-arrow-left me-2"></i>View All Challenges
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Modal -->
+{% if current_user.is_authenticated %}
+<div class="modal fade" id="submitModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Submit Artwork for Challenge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('submit_challenge', challenge_id=challenge.id) }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="artwork" class="form-label">Select Artwork</label>
+                        <select class="form-select" name="artwork_id" required>
+                            <option value="">Choose an artwork...</option>
+                            {% for artwork in current_user.artworks %}
+                            <option value="{{ artwork.id }}">{{ artwork.title }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Select an existing artwork or <a href="{{ url_for('upload_artwork') }}">upload a new one</a>.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

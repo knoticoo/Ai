@@ -189,15 +189,15 @@ def upload_artwork():
             file.save(filepath)
             
             # Analyze artwork with AI
-            ai_feedback, ai_score = ai_analyzer.analyze_artwork(filepath)
+            ai_analysis = ai_analyzer.analyze_artwork(filepath)
             
             artwork = Artwork(
                 title=request.form['title'],
                 description=request.form['description'],
                 filename=unique_filename,
                 user_id=current_user.id,
-                ai_feedback=ai_feedback,
-                ai_score=ai_score,
+                ai_feedback=ai_analysis['feedback'],
+                ai_score=ai_analysis['score'],
                 category=request.form.get('category', 'Other'),
                 tags=request.form.get('tags', '')
             )
