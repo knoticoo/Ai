@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ challenge.title }} - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Challenge Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+                <a href="{{ url_for('challenges') }}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Challenges
+                </a>
+                <span class="badge bg-warning text-dark">{{ challenge.difficulty }}</span>
+            </div>
+            
+            <h1 class="display-4 fw-bold">{{ challenge.title }}</h1>
+            <p class="lead text-muted">{{ challenge.description }}</p>
+            
+            {% if challenge.requirements %}
+            <div class="mb-4">
+                <h5 class="text-primary">Requirements:</h5>
+                <p>{{ challenge.requirements }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Challenge Info</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Reward:</span>
+                        <span><i class="fas fa-gem text-warning"></i> {{ challenge.reward_exp }} XP</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Deadline:</span>
+                        <span>{{ challenge.end_date.strftime('%B %d, %Y') if challenge.end_date else 'No deadline' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Submissions:</span>
+                        <span>{{ submissions|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Submit Your Entry -->
+    {% if current_user.is_authenticated and challenge.is_active %}
+    <div class="card mb-5">
+        <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-upload me-2"></i>Submit Your Entry</h4>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('submit_challenge', challenge_id=challenge.id) }}" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="artwork_file" class="form-label">Upload Artwork</label>
+                    <input type="file" class="form-control" id="artwork_file" name="artwork_file" accept="image/*" required>
+                    <div class="form-text">Accepted formats: JPG, PNG, GIF (max 16MB)</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description (Optional)</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" placeholder="Tell us about your submission..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Entry
+                </button>
+            </form>
+        </div>
+    </div>
+    {% elif not current_user.is_authenticated %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <a href="{{ url_for('login') }}">Login</a> to participate in this challenge.
+    </div>
+    {% elif not challenge.is_active %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        This challenge is no longer active.
+    </div>
+    {% endif %}
+    
+    <!-- Submissions Gallery -->
+    <div class="mb-4">
+        <h3>Community Submissions</h3>
+        {% if submissions %}
+        <div class="row g-4">
+            {% for submission in submissions %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-img-top position-relative" style="height: 250px; overflow: hidden;">
+                        <img src="{{ url_for('static', filename='uploads/' + submission.artwork.filename) }}" 
+                             class="w-100 h-100" style="object-fit: cover;" 
+                             alt="{{ submission.artwork.title }}">
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">{{ submission.artwork.title }}</h6>
+                        <p class="text-muted small">by {{ submission.user.username }}</p>
+                        {% if submission.artwork.description %}
+                        <p class="card-text small">{{ submission.artwork.description[:100] }}...</p>
+                        {% endif %}
+                        <small class="text-muted">
+                            Submitted {{ submission.submission_date.strftime('%B %d, %Y') }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-images fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No submissions yet. Be the first to participate!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
