@@ -823,6 +823,75 @@ def ai_redraw(artwork_id):
         flash(f'An error occurred during AI redraw: {str(e)}', 'error')
         return redirect(url_for('gallery'))
 
+@app.route('/ai_style_transfer/<int:artwork_id>')
+@login_required
+def ai_style_transfer_page(artwork_id):
+    artwork = Artwork.query.get_or_404(artwork_id)
+    
+    available_styles = [
+        {'id': 'van_gogh', 'name': 'Van Gogh', 'description': 'Swirling brushstrokes and vivid colors'},
+        {'id': 'picasso', 'name': 'Picasso', 'description': 'Cubist geometric abstraction'},
+        {'id': 'monet', 'name': 'Monet', 'description': 'Soft impressionist lighting'},
+        {'id': 'dali', 'name': 'Salvador Dalí', 'description': 'Surrealist dream-like distortions'},
+        {'id': 'watercolor', 'name': 'Watercolor', 'description': 'Soft watercolor painting effect'},
+        {'id': 'oil_painting', 'name': 'Oil Painting', 'description': 'Rich oil painting texture'},
+        {'id': 'sketch', 'name': 'Pencil Sketch', 'description': 'Classic pencil drawing style'},
+        {'id': 'anime', 'name': 'Anime Style', 'description': 'Japanese animation art style'}
+    ]
+    
+    return render_template('ai_style_transfer.html', artwork=artwork, styles=available_styles)
+
+@app.route('/apply_style/<int:artwork_id>/<style_name>')
+@login_required
+def apply_style(artwork_id, style_name):
+    try:
+        artwork = Artwork.query.get_or_404(artwork_id)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], artwork.filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'Artwork file not found'})
+        
+        styled_image, message = ai_analyzer.apply_style_transfer(file_path, style_name)
+        
+        if styled_image is None:
+            return jsonify({'success': False, 'error': message})
+        
+        return jsonify({
+            'success': True, 
+            'styled_image': styled_image, 
+            'message': message,
+            'style_name': style_name.replace('_', ' ').title()
+        })
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/color_palette/<int:artwork_id>')
+@login_required
+def generate_palette(artwork_id):
+    palette_type = request.args.get('type', 'harmonious')
+    
+    try:
+        artwork = Artwork.query.get_or_404(artwork_id)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], artwork.filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'Artwork file not found'})
+        
+        palette_data, message = ai_analyzer.generate_color_palette(file_path, palette_type)
+        
+        if palette_data is None:
+            return jsonify({'success': False, 'error': message})
+        
+        return jsonify({
+            'success': True,
+            'palette': palette_data,
+            'message': message
+        })
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 # Admin routes
 @app.route('/admin')
 @login_required
