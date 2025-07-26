@@ -131,6 +131,30 @@ def not_found(error):
                          error_code=404, 
                          error_message="Page not found"), 404
 
+# Admin initialization function
+def create_admin_user():
+    """Create admin user if it doesn't exist"""
+    admin = User.query.filter_by(username='Knotico').first()
+    if not admin:
+        admin = User(
+            username='Knotico',
+            email='admin@artai.com',
+            password_hash=generate_password_hash('Millie1991'),
+            is_admin=True,
+            level=10,
+            experience=9999
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("✅ Admin user 'Knotico' created successfully!")
+    else:
+        # Ensure existing user has admin privileges
+        admin.is_admin = True
+        admin.level = 10
+        admin.experience = 9999
+        db.session.commit()
+        print("✅ Admin user 'Knotico' updated with admin privileges!")
+
 # Routes
 @app.route('/')
 def index():
@@ -472,4 +496,5 @@ def new_learning_path():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        create_admin_user()  # Create admin user on startup
     app.run(debug=True, host='0.0.0.0', port=5000)
