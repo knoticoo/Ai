@@ -118,7 +118,7 @@ class AIGuideGenerator:
     def generate_guide(self, title, description):
         """
         Generate a comprehensive learning guide
-        Returns: formatted guide content
+        Returns: dictionary with guide content
         """
         try:
             # Determine the type of guide based on title and description
@@ -127,7 +127,16 @@ class AIGuideGenerator:
             # Generate guide content
             guide_content = self._create_guide_content(guide_type, title)
             
-            return guide_content
+            # Return structured data
+            return {
+                'title': title,
+                'guide_type': guide_type,
+                'content': guide_content,
+                'created_at': datetime.now().strftime('%B %d, %Y at %H:%M'),
+                'estimated_time': self._get_estimated_time(guide_type),
+                'difficulty': self._get_difficulty(guide_type),
+                'quick_tips': self._get_quick_tips(guide_type)
+            }
             
         except Exception as e:
             print(f"Error generating guide: {e}")
@@ -426,3 +435,63 @@ This guide will help you develop your artistic skills and understanding. Art is 
 - Keep learning and growing
 
 Remember: Every artist was once a beginner. The key is consistent practice and a willingness to learn from both successes and mistakes."""
+
+    def _get_estimated_time(self, guide_type):
+        """Get estimated time for completing the guide"""
+        time_estimates = {
+            'drawing': '2-3 hours',
+            'watercolor': '3-4 hours',
+            'oil': '4-6 hours',
+            'acrylic': '2-3 hours',
+            'digital': '2-4 hours',
+            'painting': '3-5 hours',
+            'composition': '1-2 hours',
+            'color_theory': '2-3 hours'
+        }
+        return time_estimates.get(guide_type, '2-3 hours')
+
+    def _get_difficulty(self, guide_type):
+        """Get difficulty level for the guide"""
+        difficulty_levels = {
+            'drawing': 'Beginner to Intermediate',
+            'watercolor': 'Intermediate',
+            'oil': 'Intermediate to Advanced',
+            'acrylic': 'Beginner to Intermediate',
+            'digital': 'Beginner to Intermediate',
+            'painting': 'Intermediate',
+            'composition': 'All Levels',
+            'color_theory': 'All Levels'
+        }
+        return difficulty_levels.get(guide_type, 'Beginner to Intermediate')
+
+    def _get_quick_tips(self, guide_type):
+        """Get quick tips for the guide type"""
+        tips = [
+            "Practice regularly, even if just for 15 minutes a day",
+            "Don't be afraid to make mistakes - they're part of learning",
+            "Study the work of artists you admire",
+            "Keep a sketchbook for daily practice",
+            "Experiment with different materials and techniques"
+        ]
+        
+        # Add specific tips based on guide type
+        if guide_type == 'drawing':
+            tips.extend([
+                "Start with basic shapes before adding details",
+                "Use light strokes for initial sketches",
+                "Practice drawing from life whenever possible"
+            ])
+        elif guide_type in ['watercolor', 'oil', 'acrylic']:
+            tips.extend([
+                "Test colors on scrap paper first",
+                "Work from light to dark",
+                "Clean your brushes thoroughly after use"
+            ])
+        elif guide_type == 'digital':
+            tips.extend([
+                "Learn keyboard shortcuts to speed up your workflow",
+                "Use layers to organize your work",
+                "Save your work frequently"
+            ])
+        
+        return tips[:8]  # Return max 8 tips
