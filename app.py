@@ -94,11 +94,15 @@ class ForumPost(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('forum_category.id'))
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    category = db.Column(db.String(50), default='General')
+    category = db.Column(db.String(50), default='General')  # Keep for backward compatibility
     likes = db.Column(db.Integer, default=0)
+    views = db.Column(db.Integer, default=0)
+    is_pinned = db.Column(db.Boolean, default=False)
     
     comments = db.relationship('Comment', backref='post', lazy=True)
+    category_obj = db.relationship('ForumCategory', backref='posts')
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -106,6 +110,52 @@ class Comment(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('forum_post.id'), nullable=False)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ForumCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    icon = db.Column(db.String(50), default='fas fa-comments')
+    color = db.Column(db.String(20), default='primary')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class UserFollow(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    following_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Ensure a user can't follow the same person twice
+    __table_args__ = (db.UniqueConstraint('follower_id', 'following_id'),)
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'like', 'comment', 'follow', 'battle_win', etc.
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    url = db.Column(db.String(200))  # Link to relevant page
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Optional: Link to related objects
+    related_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Who triggered the notification
+    related_post_id = db.Column(db.Integer, db.ForeignKey('forum_post.id'))
+    related_artwork_id = db.Column(db.Integer, db.ForeignKey('artwork.id'))
+    
+    user = db.relationship('User', foreign_keys=[user_id], backref='notifications')
+    related_user = db.relationship('User', foreign_keys=[related_user_id])
+
+class ActivityFeed(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action_type = db.Column(db.String(50), nullable=False)  # 'upload', 'like', 'comment', 'follow', 'battle_join'
+    target_type = db.Column(db.String(50))  # 'artwork', 'post', 'user', 'battle'
+    target_id = db.Column(db.Integer)
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='activities')
 
 class LearningPath(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -708,6 +758,110 @@ def check_achievements(user_id):
             
             print(f"🏆 User {user.username} earned achievement: {achievement.name}")
 
+def create_notification(user_id, type, title, message, url=None, related_user_id=None, related_post_id=None, related_artwork_id=None):
+    """Create a notification for a user"""
+    notification = Notification(
+        user_id=user_id,
+        type=type,
+        title=title,
+        message=message,
+        url=url,
+        related_user_id=related_user_id,
+        related_post_id=related_post_id,
+        related_artwork_id=related_artwork_id
+    )
+    db.session.add(notification)
+    db.session.flush()  # Get the ID without committing
+    return notification
+
+def create_activity(user_id, action_type, target_type=None, target_id=None, message=None):
+    """Create an activity feed entry"""
+    if not message:
+        user = User.query.get(user_id)
+        if action_type == 'upload' and target_type == 'artwork':
+            artwork = Artwork.query.get(target_id)
+            message = f"{user.username} uploaded a new artwork: {artwork.title}"
+        elif action_type == 'like' and target_type == 'artwork':
+            artwork = Artwork.query.get(target_id)
+            message = f"{user.username} liked {artwork.artist.username}'s artwork"
+        elif action_type == 'comment' and target_type == 'post':
+            post = ForumPost.query.get(target_id)
+            message = f"{user.username} commented on {post.title}"
+        elif action_type == 'follow' and target_type == 'user':
+            followed_user = User.query.get(target_id)
+            message = f"{user.username} started following {followed_user.username}"
+        elif action_type == 'battle_join':
+            battle = ArtBattle.query.get(target_id)
+            message = f"{user.username} joined the {battle.title} battle"
+        else:
+            message = f"{user.username} performed {action_type}"
+    
+    activity = ActivityFeed(
+        user_id=user_id,
+        action_type=action_type,
+        target_type=target_type,
+        target_id=target_id,
+        message=message
+    )
+    db.session.add(activity)
+    return activity
+
+def initialize_forum_categories():
+    """Initialize default forum categories"""
+    categories = [
+        {
+            'name': 'General Discussion',
+            'description': 'General art and platform discussions',
+            'icon': 'fas fa-comments',
+            'color': 'primary'
+        },
+        {
+            'name': 'Artwork Showcase',
+            'description': 'Share your latest creations',
+            'icon': 'fas fa-palette',
+            'color': 'success'
+        },
+        {
+            'name': 'Tutorials & Tips',
+            'description': 'Learn and teach art techniques',
+            'icon': 'fas fa-graduation-cap',
+            'color': 'info'
+        },
+        {
+            'name': 'Critiques & Feedback',
+            'description': 'Get constructive feedback on your work',
+            'icon': 'fas fa-search',
+            'color': 'warning'
+        },
+        {
+            'name': 'Challenges & Contests',
+            'description': 'Participate in art challenges',
+            'icon': 'fas fa-trophy',
+            'color': 'danger'
+        },
+        {
+            'name': 'AI Art Discussion',
+            'description': 'Discuss AI tools and techniques',
+            'icon': 'fas fa-robot',
+            'color': 'secondary'
+        },
+        {
+            'name': 'Community Events',
+            'description': 'Platform news and community events',
+            'icon': 'fas fa-calendar',
+            'color': 'dark'
+        }
+    ]
+    
+    for cat_data in categories:
+        existing = ForumCategory.query.filter_by(name=cat_data['name']).first()
+        if not existing:
+            category = ForumCategory(**cat_data)
+            db.session.add(category)
+    
+    db.session.commit()
+    print("✅ Forum categories initialized!")
+
 @app.route('/roadmap')
 def roadmap():
     learning_paths = LearningPath.query.filter_by(is_active=True).order_by(LearningPath.order).all()
@@ -891,6 +1045,181 @@ def generate_palette(artwork_id):
     
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+# Community Routes
+@app.route('/follow/<int:user_id>', methods=['POST'])
+@login_required
+def follow_user(user_id):
+    if user_id == current_user.id:
+        return jsonify({'success': False, 'error': 'Cannot follow yourself'})
+    
+    target_user = User.query.get_or_404(user_id)
+    
+    # Check if already following
+    existing_follow = UserFollow.query.filter_by(
+        follower_id=current_user.id,
+        following_id=user_id
+    ).first()
+    
+    if existing_follow:
+        return jsonify({'success': False, 'error': 'Already following this user'})
+    
+    # Create follow relationship
+    follow = UserFollow(
+        follower_id=current_user.id,
+        following_id=user_id
+    )
+    db.session.add(follow)
+    
+    # Create notification for followed user
+    create_notification(
+        user_id=user_id,
+        type='follow',
+        title='New Follower',
+        message=f'{current_user.username} started following you!',
+        url=url_for('profile', username=current_user.username),
+        related_user_id=current_user.id
+    )
+    
+    # Create activity
+    create_activity(
+        user_id=current_user.id,
+        action_type='follow',
+        target_type='user',
+        target_id=user_id
+    )
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': f'Now following {target_user.username}'})
+
+@app.route('/unfollow/<int:user_id>', methods=['POST'])
+@login_required
+def unfollow_user(user_id):
+    follow = UserFollow.query.filter_by(
+        follower_id=current_user.id,
+        following_id=user_id
+    ).first()
+    
+    if not follow:
+        return jsonify({'success': False, 'error': 'Not following this user'})
+    
+    db.session.delete(follow)
+    db.session.commit()
+    
+    target_user = User.query.get(user_id)
+    return jsonify({'success': True, 'message': f'Unfollowed {target_user.username}'})
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    # Mark all notifications as read when viewing
+    unread_notifications = Notification.query.filter_by(
+        user_id=current_user.id,
+        is_read=False
+    ).all()
+    
+    for notification in unread_notifications:
+        notification.is_read = True
+    
+    # Get all notifications
+    all_notifications = Notification.query.filter_by(
+        user_id=current_user.id
+    ).order_by(Notification.created_at.desc()).limit(50).all()
+    
+    db.session.commit()
+    
+    return render_template('notifications.html', notifications=all_notifications)
+
+@app.route('/activity_feed')
+def activity_feed():
+    # Get activities from followed users if logged in
+    if current_user.is_authenticated:
+        # Get user's follows
+        following_ids = db.session.query(UserFollow.following_id).filter_by(
+            follower_id=current_user.id
+        ).subquery()
+        
+        # Get activities from followed users + own activities
+        activities = ActivityFeed.query.filter(
+            db.or_(
+                ActivityFeed.user_id.in_(following_ids),
+                ActivityFeed.user_id == current_user.id
+            )
+        ).order_by(ActivityFeed.created_at.desc()).limit(50).all()
+    else:
+        # Public activity feed
+        activities = ActivityFeed.query.order_by(
+            ActivityFeed.created_at.desc()
+        ).limit(20).all()
+    
+    return render_template('activity_feed.html', activities=activities)
+
+@app.route('/forum/categories')
+def forum_categories():
+    categories = ForumCategory.query.all()
+    
+    # Get post counts and latest posts for each category
+    category_stats = []
+    for category in categories:
+        post_count = ForumPost.query.filter_by(category_id=category.id).count()
+        latest_post = ForumPost.query.filter_by(category_id=category.id).order_by(
+            ForumPost.created_date.desc()
+        ).first()
+        
+        category_stats.append({
+            'category': category,
+            'post_count': post_count,
+            'latest_post': latest_post
+        })
+    
+    return render_template('forum_categories.html', category_stats=category_stats)
+
+@app.route('/forum/category/<int:category_id>')
+def forum_category_posts(category_id):
+    category = ForumCategory.query.get_or_404(category_id)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    posts = ForumPost.query.filter_by(category_id=category_id).order_by(
+        ForumPost.is_pinned.desc(),
+        ForumPost.created_date.desc()
+    ).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('forum_category_posts.html', category=category, posts=posts)
+
+@app.route('/users/discover')
+def discover_users():
+    # Get top artists by various metrics
+    top_by_artworks = User.query.join(UserStats).order_by(
+        UserStats.total_artworks.desc()
+    ).limit(10).all()
+    
+    top_by_experience = User.query.order_by(User.experience.desc()).limit(10).all()
+    
+    recently_joined = User.query.order_by(User.created_at.desc()).limit(10).all()
+    
+    # Get users with most followers
+    follower_counts = db.session.query(
+        UserFollow.following_id,
+        db.func.count(UserFollow.follower_id).label('follower_count')
+    ).group_by(UserFollow.following_id).order_by(
+        db.func.count(UserFollow.follower_id).desc()
+    ).limit(10).all()
+    
+    popular_users = []
+    for user_id, count in follower_counts:
+        user = User.query.get(user_id)
+        if user:
+            popular_users.append((user, count))
+    
+    return render_template('discover_users.html', 
+                         top_by_artworks=top_by_artworks,
+                         top_by_experience=top_by_experience,
+                         recently_joined=recently_joined,
+                         popular_users=popular_users)
 
 # Art Battle Routes
 @app.route('/battles/create', methods=['GET', 'POST'])
@@ -1182,4 +1511,5 @@ if __name__ == '__main__':
         create_admin_user()  # Create admin user on startup
         initialize_achievements()  # Create default achievements
         initialize_skill_trees()  # Create default skill trees
+        initialize_forum_categories()  # Create default forum categories
     app.run(debug=True, host='0.0.0.0', port=5000)
