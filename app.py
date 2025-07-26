@@ -113,6 +113,11 @@ class LearningPath(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Custom template filter
+@app.template_filter('nl2br')
+def nl2br_filter(text):
+    return text.replace('\n', '<br>\n') if text else ''
+
 # Routes
 @app.route('/')
 def index():
@@ -349,6 +354,14 @@ def add_comment(post_id):
     db.session.commit()
     flash('Comment added successfully!')
     return redirect(url_for('forum_post', post_id=post_id))
+
+@app.route('/forum/post/<int:post_id>/like', methods=['POST'])
+@login_required
+def like_post(post_id):
+    post = ForumPost.query.get_or_404(post_id)
+    post.likes += 1
+    db.session.commit()
+    return jsonify({'success': True, 'likes': post.likes})
 
 @app.route('/roadmap')
 def roadmap():

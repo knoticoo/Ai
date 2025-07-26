@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - Forum - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Navigation -->
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('forum') }}">Forum</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <!-- Main Post -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="h3 mb-1">{{ post.title }}</h1>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-primary">{{ post.category }}</span>
+                    <small class="text-muted">
+                        <i class="fas fa-user me-1"></i>{{ post.author.username }}
+                    </small>
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>{{ post.created_date.strftime('%B %d, %Y at %I:%M %p') }}
+                    </small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="likePost({{ post.id }})">
+                    <i class="fas fa-heart me-1"></i>{{ post.likes }}
+                </button>
+                {% if current_user.is_authenticated and (current_user.id == post.author_id or current_user.is_admin) %}
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit Post</a></li>
+                        <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete Post</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="post-content">
+                {{ post.content|nl2br|safe }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comments Section -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">
+                <i class="fas fa-comments me-2"></i>
+                Comments ({{ post.comments|length }})
+            </h4>
+        </div>
+        
+        <!-- Add Comment Form -->
+        {% if current_user.is_authenticated %}
+        <div class="card-body border-bottom">
+            <form action="{{ url_for('add_comment', post_id=post.id) }}" method="POST">
+                <div class="mb-3">
+                    <label for="comment" class="form-label">Add a comment</label>
+                    <textarea class="form-control" id="comment" name="content" rows="3" 
+                              placeholder="Share your thoughts..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Post Comment
+                </button>
+            </form>
+        </div>
+        {% endif %}
+        
+        <!-- Comments List -->
+        <div class="card-body">
+            {% if post.comments %}
+            <div class="comments-list">
+                {% for comment in post.comments %}
+                <div class="comment mb-4 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <strong>{{ comment.author.username }}</strong>
+                            <small class="text-muted">{{ comment.created_date.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                        </div>
+                        {% if current_user.is_authenticated and (current_user.id == comment.author_id or current_user.is_admin) %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content|nl2br|safe }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-comments fa-2x mb-3"></i>
+                <p>No comments yet. Be the first to comment!</p>
+                {% if not current_user.is_authenticated %}
+                <p><a href="{{ url_for('login') }}">Login</a> to add a comment.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Back to Forum Button -->
+    <div class="mt-4">
+        <a href="{{ url_for('forum') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Forum
+        </a>
+    </div>
+</div>
+
+<script>
+function likePost(postId) {
+    fetch(`/forum/post/${postId}/like`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}
