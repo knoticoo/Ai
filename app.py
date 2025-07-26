@@ -164,6 +164,94 @@ class LearningPath(db.Model):
     difficulty = db.Column(db.String(20), default='Beginner')
     order = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
+    category = db.Column(db.String(50), default='General')
+    estimated_hours = db.Column(db.Integer, default=1)
+    thumbnail_url = db.Column(db.String(200))
+    prerequisites = db.Column(db.Text)  # JSON string of prerequisite path IDs
+    completion_reward_xp = db.Column(db.Integer, default=50)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    lessons = db.relationship('Lesson', backref='learning_path', lazy=True, cascade='all, delete-orphan')
+
+class Lesson(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    path_id = db.Column(db.Integer, db.ForeignKey('learning_path.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    lesson_type = db.Column(db.String(20), default='theory')  # theory, practical, quiz, video
+    order = db.Column(db.Integer, default=0)
+    estimated_minutes = db.Column(db.Integer, default=15)
+    video_url = db.Column(db.String(200))
+    practice_prompt = db.Column(db.Text)
+    quiz_data = db.Column(db.Text)  # JSON string for quiz questions
+    completion_xp = db.Column(db.Integer, default=10)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class UserPathProgress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    path_id = db.Column(db.Integer, db.ForeignKey('learning_path.id'), nullable=False)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    current_lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'))
+    progress_percentage = db.Column(db.Float, default=0.0)
+    time_spent_minutes = db.Column(db.Integer, default=0)
+    
+    # Ensure unique user-path combination
+    __table_args__ = (db.UniqueConstraint('user_id', 'path_id'),)
+
+class UserLessonProgress(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
+    completed_at = db.Column(db.DateTime)
+    quiz_score = db.Column(db.Float)  # For quiz lessons
+    practice_submitted = db.Column(db.Boolean, default=False)  # For practical lessons
+    time_spent_minutes = db.Column(db.Integer, default=0)
+    notes = db.Column(db.Text)  # User's personal notes
+    
+    # Ensure unique user-lesson combination
+    __table_args__ = (db.UniqueConstraint('user_id', 'lesson_id'),)
+
+class Tutorial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    content = db.Column(db.Text, nullable=False)
+    tutorial_type = db.Column(db.String(20), default='technique')  # technique, tool, style, beginner
+    difficulty = db.Column(db.String(20), default='Beginner')
+    estimated_minutes = db.Column(db.Integer, default=30)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    thumbnail_url = db.Column(db.String(200))
+    tags = db.Column(db.String(200))  # Comma-separated tags
+    likes = db.Column(db.Integer, default=0)
+    views = db.Column(db.Integer, default=0)
+    is_featured = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    author = db.relationship('User', backref='tutorials')
+
+class ArtTechnique(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    category = db.Column(db.String(50))  # drawing, painting, digital, mixed_media
+    difficulty = db.Column(db.String(20), default='Beginner')
+    tools_required = db.Column(db.Text)  # JSON string of required tools
+    step_by_step = db.Column(db.Text)  # JSON string of steps
+    example_images = db.Column(db.Text)  # JSON string of image URLs
+    tips_and_tricks = db.Column(db.Text)
+    common_mistakes = db.Column(db.Text)
+    related_techniques = db.Column(db.Text)  # JSON string of related technique IDs
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    is_approved = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    creator = db.relationship('User', backref='art_techniques')
 
 class Achievement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -862,6 +950,294 @@ def initialize_forum_categories():
     db.session.commit()
     print("✅ Forum categories initialized!")
 
+def initialize_learning_paths():
+    """Initialize default learning paths and lessons"""
+    learning_paths_data = [
+        {
+            'title': 'Digital Art Fundamentals',
+            'description': 'Master the basics of digital art creation, from tools to techniques',
+            'difficulty': 'Beginner',
+            'category': 'Digital Art',
+            'estimated_hours': 8,
+            'order': 1,
+            'completion_reward_xp': 100,
+            'lessons': [
+                {
+                    'title': 'Introduction to Digital Art Tools',
+                    'content': 'Learn about the essential software and hardware for digital art creation. We\'ll cover popular programs like Photoshop, Procreate, and free alternatives like GIMP and Krita.',
+                    'lesson_type': 'theory',
+                    'order': 1,
+                    'estimated_minutes': 20,
+                    'completion_xp': 15
+                },
+                {
+                    'title': 'Understanding Layers and Blending Modes',
+                    'content': 'Layers are the foundation of digital art. Learn how to organize your artwork, use different blending modes, and create non-destructive workflows.',
+                    'lesson_type': 'practical',
+                    'order': 2,
+                    'estimated_minutes': 30,
+                    'practice_prompt': 'Create a simple landscape using at least 5 different layers and 3 different blending modes.',
+                    'completion_xp': 20
+                },
+                {
+                    'title': 'Color Theory in Digital Art',
+                    'content': 'Explore color relationships, color harmony, and how digital screens affect color perception. Learn to create compelling color palettes.',
+                    'lesson_type': 'theory',
+                    'order': 3,
+                    'estimated_minutes': 25,
+                    'completion_xp': 15
+                },
+                {
+                    'title': 'Digital Painting Techniques Quiz',
+                    'content': 'Test your knowledge of digital painting fundamentals.',
+                    'lesson_type': 'quiz',
+                    'order': 4,
+                    'estimated_minutes': 10,
+                    'quiz_data': '{"questions": [{"question": "What is the primary advantage of using layers in digital art?", "options": ["Better colors", "Non-destructive editing", "Faster rendering", "Smaller file size"], "correct": 1}]}',
+                    'completion_xp': 25
+                }
+            ]
+        },
+        {
+            'title': 'Traditional Drawing Skills',
+            'description': 'Build a strong foundation in traditional drawing techniques that apply to all art forms',
+            'difficulty': 'Beginner',
+            'category': 'Traditional Art',
+            'estimated_hours': 12,
+            'order': 2,
+            'completion_reward_xp': 150,
+            'lessons': [
+                {
+                    'title': 'Line Quality and Control',
+                    'content': 'Develop confident, expressive lines. Learn about line weight, texture, and how lines can convey emotion and movement.',
+                    'lesson_type': 'practical',
+                    'order': 1,
+                    'estimated_minutes': 45,
+                    'practice_prompt': 'Practice drawing continuous lines without lifting your pencil. Create 10 different line textures.',
+                    'completion_xp': 20
+                },
+                {
+                    'title': 'Understanding Perspective',
+                    'content': 'Master one-point, two-point, and three-point perspective. Learn how to create depth and dimension in your drawings.',
+                    'lesson_type': 'theory',
+                    'order': 2,
+                    'estimated_minutes': 40,
+                    'completion_xp': 18
+                },
+                {
+                    'title': 'Shading and Value Studies',
+                    'content': 'Learn to see and render light, shadow, and form. Understand how value creates volume and mood in your artwork.',
+                    'lesson_type': 'practical',
+                    'order': 3,
+                    'estimated_minutes': 50,
+                    'practice_prompt': 'Create a value study of 5 simple objects using only 5 different values.',
+                    'completion_xp': 25
+                }
+            ]
+        },
+        {
+            'title': 'Character Design Mastery',
+            'description': 'Create compelling characters from concept to final illustration',
+            'difficulty': 'Intermediate',
+            'category': 'Character Design',
+            'estimated_hours': 15,
+            'order': 3,
+            'prerequisites': '["1", "2"]',  # Requires completion of paths 1 and 2
+            'completion_reward_xp': 200,
+            'lessons': [
+                {
+                    'title': 'Character Concept Development',
+                    'content': 'Learn to develop unique character concepts. Explore personality, backstory, and how these elements influence visual design.',
+                    'lesson_type': 'theory',
+                    'order': 1,
+                    'estimated_minutes': 35,
+                    'completion_xp': 20
+                },
+                {
+                    'title': 'Anatomy and Proportions',
+                    'content': 'Understand human anatomy basics and how to stylize proportions for different character types and art styles.',
+                    'lesson_type': 'practical',
+                    'order': 2,
+                    'estimated_minutes': 60,
+                    'practice_prompt': 'Draw the same character in 3 different proportion styles (realistic, cartoon, chibi).',
+                    'completion_xp': 30
+                },
+                {
+                    'title': 'Character Expressions and Emotions',
+                    'content': 'Master facial expressions and body language to convey personality and emotion effectively.',
+                    'lesson_type': 'practical',
+                    'order': 3,
+                    'estimated_minutes': 45,
+                    'practice_prompt': 'Create an expression sheet showing 8 different emotions for your character.',
+                    'completion_xp': 25
+                }
+            ]
+        },
+        {
+            'title': 'AI Art Integration',
+            'description': 'Learn to effectively combine AI tools with traditional art skills',
+            'difficulty': 'Advanced',
+            'category': 'AI Art',
+            'estimated_hours': 6,
+            'order': 4,
+            'completion_reward_xp': 120,
+            'lessons': [
+                {
+                    'title': 'Understanding AI Art Tools',
+                    'content': 'Explore different AI art platforms, their strengths, and how to choose the right tool for your project.',
+                    'lesson_type': 'theory',
+                    'order': 1,
+                    'estimated_minutes': 25,
+                    'completion_xp': 15
+                },
+                {
+                    'title': 'Prompt Engineering for Artists',
+                    'content': 'Master the art of writing effective prompts to get the results you want from AI art generators.',
+                    'lesson_type': 'practical',
+                    'order': 2,
+                    'estimated_minutes': 40,
+                    'practice_prompt': 'Create 5 different AI artworks by refining and improving your prompts iteratively.',
+                    'completion_xp': 25
+                },
+                {
+                    'title': 'AI + Human Collaboration',
+                    'content': 'Learn professional workflows for combining AI-generated elements with hand-drawn art for commercial projects.',
+                    'lesson_type': 'practical',
+                    'order': 3,
+                    'estimated_minutes': 50,
+                    'practice_prompt': 'Create a final artwork that combines AI-generated backgrounds with hand-drawn characters.',
+                    'completion_xp': 30
+                }
+            ]
+        }
+    ]
+    
+    for path_data in learning_paths_data:
+        existing_path = LearningPath.query.filter_by(title=path_data['title']).first()
+        if not existing_path:
+            # Create the learning path
+            lessons_data = path_data.pop('lessons')
+            path = LearningPath(**path_data)
+            db.session.add(path)
+            db.session.flush()  # Get the path ID
+            
+            # Create lessons for this path
+            for lesson_data in lessons_data:
+                lesson_data['path_id'] = path.id
+                lesson = Lesson(**lesson_data)
+                db.session.add(lesson)
+    
+    db.session.commit()
+    print("✅ Learning paths and lessons initialized!")
+
+def initialize_tutorials():
+    """Initialize sample tutorials"""
+    tutorials_data = [
+        {
+            'title': 'Mastering Digital Brushes',
+            'description': 'Learn to create custom brushes and understand brush dynamics in digital art software',
+            'content': '''# Mastering Digital Brushes
+
+Digital brushes are the foundation of digital painting. Understanding how to use and create custom brushes will dramatically improve your artwork.
+
+## Understanding Brush Properties
+
+### Opacity and Flow
+- **Opacity**: Controls the transparency of each stroke
+- **Flow**: Controls how paint builds up within a single stroke
+
+### Brush Dynamics
+- **Pressure Sensitivity**: Link brush properties to pen pressure
+- **Tilt and Rotation**: Use pen angle for varied effects
+- **Velocity**: Stroke speed affects brush behavior
+
+## Creating Custom Brushes
+
+1. Start with a base texture or shape
+2. Define brush tip behavior
+3. Set up pressure dynamics
+4. Test and refine your brush
+
+## Pro Tips
+- Save your favorite brush settings as presets
+- Experiment with texture brushes for backgrounds
+- Use different brushes for different art styles
+- Don't rely too heavily on fancy brushes - skill matters more
+
+Practice these techniques and watch your digital art improve dramatically!''',
+            'tutorial_type': 'technique',
+            'difficulty': 'Intermediate',
+            'estimated_minutes': 45,
+            'tags': 'digital art, brushes, technique, photoshop, procreate',
+            'is_featured': True
+        },
+        {
+            'title': 'Color Theory for Beginners',
+            'description': 'Understand the fundamentals of color and how to create harmonious color schemes',
+            'content': '''# Color Theory Fundamentals
+
+Color is one of the most powerful tools in an artist's arsenal. Understanding color theory will help you create more impactful and harmonious artwork.
+
+## The Color Wheel
+
+### Primary Colors
+- Red, Blue, Yellow (traditional)
+- Red, Green, Blue (digital/light)
+
+### Secondary Colors
+Created by mixing two primary colors
+
+### Tertiary Colors
+Created by mixing a primary and secondary color
+
+## Color Relationships
+
+### Complementary Colors
+Colors opposite each other on the color wheel
+- Create high contrast and vibrant effects
+- Use sparingly for maximum impact
+
+### Analogous Colors
+Colors next to each other on the color wheel
+- Create harmony and unity
+- Great for natural, peaceful scenes
+
+### Triadic Colors
+Three colors evenly spaced on the color wheel
+- Vibrant but balanced
+- Choose one dominant color
+
+## Color Temperature
+- **Warm colors**: Reds, oranges, yellows (energetic, advancing)
+- **Cool colors**: Blues, greens, purples (calming, receding)
+
+## Practical Applications
+1. Choose a dominant color temperature
+2. Use the opposite temperature for accents
+3. Consider the mood you want to convey
+4. Study master paintings for color inspiration
+
+Remember: Rules are meant to be broken once you understand them!''',
+            'tutorial_type': 'theory',
+            'difficulty': 'Beginner',
+            'estimated_minutes': 30,
+            'tags': 'color theory, fundamentals, harmony, painting',
+            'is_featured': True
+        }
+    ]
+    
+    admin_user = User.query.filter_by(username='Knotico').first()
+    if admin_user:
+        for tutorial_data in tutorials_data:
+            existing_tutorial = Tutorial.query.filter_by(title=tutorial_data['title']).first()
+            if not existing_tutorial:
+                tutorial_data['author_id'] = admin_user.id
+                tutorial = Tutorial(**tutorial_data)
+                db.session.add(tutorial)
+    
+    db.session.commit()
+    print("✅ Sample tutorials initialized!")
+
 @app.route('/roadmap')
 def roadmap():
     learning_paths = LearningPath.query.filter_by(is_active=True).order_by(LearningPath.order).all()
@@ -1045,6 +1421,245 @@ def generate_palette(artwork_id):
     
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+# Learning & Education Routes
+@app.route('/learning')
+def learning_center():
+    # Get learning paths organized by category
+    categories = {}
+    all_paths = LearningPath.query.filter_by(is_active=True).order_by(LearningPath.order).all()
+    
+    for path in all_paths:
+        category = path.category
+        if category not in categories:
+            categories[category] = []
+        
+        # Get user progress if logged in
+        user_progress = None
+        if current_user.is_authenticated:
+            user_progress = UserPathProgress.query.filter_by(
+                user_id=current_user.id, path_id=path.id
+            ).first()
+        
+        categories[category].append({
+            'path': path,
+            'progress': user_progress
+        })
+    
+    # Get featured tutorials
+    featured_tutorials = Tutorial.query.filter_by(is_featured=True, is_active=True).limit(6).all()
+    
+    # Get recent tutorials
+    recent_tutorials = Tutorial.query.filter_by(is_active=True).order_by(
+        Tutorial.created_at.desc()
+    ).limit(8).all()
+    
+    return render_template('learning_center.html', 
+                         categories=categories,
+                         featured_tutorials=featured_tutorials,
+                         recent_tutorials=recent_tutorials)
+
+@app.route('/learning/path/<int:path_id>')
+def learning_path_detail(path_id):
+    path = LearningPath.query.get_or_404(path_id)
+    lessons = Lesson.query.filter_by(path_id=path_id, is_active=True).order_by(Lesson.order).all()
+    
+    # Get user progress if logged in
+    user_progress = None
+    lesson_progress = {}
+    if current_user.is_authenticated:
+        user_progress = UserPathProgress.query.filter_by(
+            user_id=current_user.id, path_id=path_id
+        ).first()
+        
+        # Get progress for each lesson
+        for lesson in lessons:
+            progress = UserLessonProgress.query.filter_by(
+                user_id=current_user.id, lesson_id=lesson.id
+            ).first()
+            lesson_progress[lesson.id] = progress
+    
+    return render_template('learning_path_detail.html', 
+                         path=path, 
+                         lessons=lessons,
+                         user_progress=user_progress,
+                         lesson_progress=lesson_progress)
+
+@app.route('/learning/lesson/<int:lesson_id>')
+@login_required
+def lesson_detail(lesson_id):
+    lesson = Lesson.query.get_or_404(lesson_id)
+    path = lesson.learning_path
+    
+    # Get or create user progress
+    user_progress = UserPathProgress.query.filter_by(
+        user_id=current_user.id, path_id=path.id
+    ).first()
+    
+    if not user_progress:
+        user_progress = UserPathProgress(
+            user_id=current_user.id,
+            path_id=path.id,
+            current_lesson_id=lesson_id
+        )
+        db.session.add(user_progress)
+        db.session.commit()
+    
+    # Get lesson progress
+    lesson_progress = UserLessonProgress.query.filter_by(
+        user_id=current_user.id, lesson_id=lesson_id
+    ).first()
+    
+    # Get next and previous lessons
+    all_lessons = Lesson.query.filter_by(path_id=path.id, is_active=True).order_by(Lesson.order).all()
+    current_index = next((i for i, l in enumerate(all_lessons) if l.id == lesson_id), 0)
+    
+    next_lesson = all_lessons[current_index + 1] if current_index + 1 < len(all_lessons) else None
+    prev_lesson = all_lessons[current_index - 1] if current_index > 0 else None
+    
+    return render_template('lesson_detail.html',
+                         lesson=lesson,
+                         path=path,
+                         lesson_progress=lesson_progress,
+                         next_lesson=next_lesson,
+                         prev_lesson=prev_lesson)
+
+@app.route('/learning/lesson/<int:lesson_id>/complete', methods=['POST'])
+@login_required
+def complete_lesson(lesson_id):
+    lesson = Lesson.query.get_or_404(lesson_id)
+    
+    # Get or create lesson progress
+    lesson_progress = UserLessonProgress.query.filter_by(
+        user_id=current_user.id, lesson_id=lesson_id
+    ).first()
+    
+    if not lesson_progress:
+        lesson_progress = UserLessonProgress(
+            user_id=current_user.id,
+            lesson_id=lesson_id
+        )
+        db.session.add(lesson_progress)
+    
+    # Mark as completed if not already
+    if not lesson_progress.completed_at:
+        lesson_progress.completed_at = datetime.utcnow()
+        
+        # Award experience points
+        current_user.experience += lesson.completion_xp
+        
+        # Handle lesson-specific completion
+        if lesson.lesson_type == 'quiz':
+            quiz_score = float(request.form.get('quiz_score', 0))
+            lesson_progress.quiz_score = quiz_score
+        elif lesson.lesson_type == 'practical':
+            lesson_progress.practice_submitted = True
+            notes = request.form.get('notes', '')
+            lesson_progress.notes = notes
+        
+        # Update path progress
+        path_progress = UserPathProgress.query.filter_by(
+            user_id=current_user.id, path_id=lesson.path_id
+        ).first()
+        
+        if path_progress:
+            # Calculate overall progress
+            total_lessons = Lesson.query.filter_by(path_id=lesson.path_id, is_active=True).count()
+            completed_lessons = UserLessonProgress.query.filter_by(
+                user_id=current_user.id
+            ).join(Lesson).filter(
+                Lesson.path_id == lesson.path_id,
+                UserLessonProgress.completed_at.isnot(None)
+            ).count()
+            
+            path_progress.progress_percentage = (completed_lessons / total_lessons) * 100
+            
+            # Check if path is completed
+            if completed_lessons == total_lessons and not path_progress.completed_at:
+                path_progress.completed_at = datetime.utcnow()
+                current_user.experience += lesson.learning_path.completion_reward_xp
+                
+                # Create notification
+                create_notification(
+                    user_id=current_user.id,
+                    type='achievement',
+                    title='Learning Path Completed!',
+                    message=f'You completed the "{lesson.learning_path.title}" learning path!',
+                    url=url_for('learning_path_detail', path_id=lesson.path_id)
+                )
+        
+        # Create activity
+        create_activity(
+            user_id=current_user.id,
+            action_type='lesson_complete',
+            target_type='lesson',
+            target_id=lesson_id,
+            message=f"{current_user.username} completed lesson: {lesson.title}"
+        )
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Lesson completed! +{lesson.completion_xp} XP',
+            'xp_gained': lesson.completion_xp
+        })
+    
+    return jsonify({'success': True, 'message': 'Lesson already completed'})
+
+@app.route('/tutorials')
+def tutorials():
+    # Filter options
+    difficulty = request.args.get('difficulty', '')
+    tutorial_type = request.args.get('type', '')
+    search = request.args.get('search', '')
+    
+    # Build query
+    query = Tutorial.query.filter_by(is_active=True)
+    
+    if difficulty:
+        query = query.filter_by(difficulty=difficulty)
+    if tutorial_type:
+        query = query.filter_by(tutorial_type=tutorial_type)
+    if search:
+        query = query.filter(Tutorial.title.contains(search) | Tutorial.tags.contains(search))
+    
+    # Pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 12
+    
+    tutorials_paginated = query.order_by(Tutorial.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Get featured tutorials for sidebar
+    featured = Tutorial.query.filter_by(is_featured=True, is_active=True).limit(5).all()
+    
+    return render_template('tutorials.html', 
+                         tutorials=tutorials_paginated,
+                         featured_tutorials=featured,
+                         current_filters={
+                             'difficulty': difficulty,
+                             'type': tutorial_type,
+                             'search': search
+                         })
+
+@app.route('/tutorial/<int:tutorial_id>')
+def tutorial_detail(tutorial_id):
+    tutorial = Tutorial.query.get_or_404(tutorial_id)
+    
+    # Increment view count
+    tutorial.views += 1
+    db.session.commit()
+    
+    # Get related tutorials
+    related = Tutorial.query.filter(
+        Tutorial.tutorial_type == tutorial.tutorial_type,
+        Tutorial.id != tutorial_id,
+        Tutorial.is_active == True
+    ).limit(4).all()
+    
+    return render_template('tutorial_detail.html', tutorial=tutorial, related_tutorials=related)
 
 # Community Routes
 @app.route('/follow/<int:user_id>', methods=['POST'])
@@ -1512,4 +2127,6 @@ if __name__ == '__main__':
         initialize_achievements()  # Create default achievements
         initialize_skill_trees()  # Create default skill trees
         initialize_forum_categories()  # Create default forum categories
+        initialize_learning_paths()  # Create default learning paths and lessons
+        initialize_tutorials()  # Create sample tutorials
     app.run(debug=True, host='0.0.0.0', port=5000)
