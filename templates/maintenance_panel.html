@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance Panel - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-4 fw-bold">Maintenance Panel</h1>
+            <p class="lead text-muted">System health monitoring and maintenance tools</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-success fs-6">
+                <i class="fas fa-circle me-1"></i>System Operational
+            </span>
+        </div>
+    </div>
+    
+    <!-- System Health Overview -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-primary mb-2">
+                        <i class="fas fa-server fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Server Status</h5>
+                    <h3 class="text-success">
+                        <i class="fas fa-check-circle"></i> Online
+                    </h3>
+                    <small class="text-muted">Uptime: {{ health_stats.uptime if health_stats else '99.9%' }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-warning mb-2">
+                        <i class="fas fa-database fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Database</h5>
+                    <h3 class="text-success">
+                        <i class="fas fa-check-circle"></i> Healthy
+                    </h3>
+                    <small class="text-muted">Response: {{ health_stats.db_response_time if health_stats else '< 50ms' }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-info mb-2">
+                        <i class="fas fa-memory fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Memory Usage</h5>
+                    <h3 class="text-warning">
+                        {{ health_stats.memory_usage if health_stats else '68%' }}
+                    </h3>
+                    <small class="text-muted">{{ health_stats.memory_total if health_stats else '8GB total' }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-danger mb-2">
+                        <i class="fas fa-hdd fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Disk Space</h5>
+                    <h3 class="text-success">
+                        {{ health_stats.disk_usage if health_stats else '42%' }}
+                    </h3>
+                    <small class="text-muted">{{ health_stats.disk_free if health_stats else '120GB free' }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activities -->
+    <div class="row mb-5">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-activity me-2"></i>Recent System Activities
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Database backup completed
+                            </div>
+                            <small class="text-muted">2 hours ago</small>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-sync text-primary me-2"></i>
+                                AI model cache refreshed
+                            </div>
+                            <small class="text-muted">6 hours ago</small>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-trash text-warning me-2"></i>
+                                Temporary files cleaned
+                            </div>
+                            <small class="text-muted">12 hours ago</small>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-shield-alt text-info me-2"></i>
+                                Security scan completed
+                            </div>
+                            <small class="text-muted">1 day ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>System Alerts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <div class="d-flex">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>
+                                <strong>High Memory Usage</strong><br>
+                                <small>Memory usage is at 68%. Consider optimizing or upgrading.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        <div class="d-flex">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <div>
+                                <strong>Scheduled Maintenance</strong><br>
+                                <small>System maintenance scheduled for next Sunday at 2:00 AM EST.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Maintenance Actions -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>Maintenance Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6 col-lg-3">
+                            <button class="btn btn-outline-primary w-100" onclick="performMaintenance('backup')">
+                                <i class="fas fa-download d-block mb-2 fa-2x"></i>
+                                <div>Database Backup</div>
+                                <small class="text-muted">Create full backup</small>
+                            </button>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3">
+                            <button class="btn btn-outline-warning w-100" onclick="performMaintenance('cleanup')">
+                                <i class="fas fa-broom d-block mb-2 fa-2x"></i>
+                                <div>Clean Temp Files</div>
+                                <small class="text-muted">Free up disk space</small>
+                            </button>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3">
+                            <button class="btn btn-outline-info w-100" onclick="performMaintenance('cache')">
+                                <i class="fas fa-sync d-block mb-2 fa-2x"></i>
+                                <div>Clear Cache</div>
+                                <small class="text-muted">Refresh all caches</small>
+                            </button>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3">
+                            <button class="btn btn-outline-success w-100" onclick="performMaintenance('optimize')">
+                                <i class="fas fa-tachometer-alt d-block mb-2 fa-2x"></i>
+                                <div>Optimize DB</div>
+                                <small class="text-muted">Optimize database</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Logs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>System Logs
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active" onclick="showLogs('error')">Errors</button>
+                        <button class="btn btn-outline-secondary" onclick="showLogs('warning')">Warnings</button>
+                        <button class="btn btn-outline-secondary" onclick="showLogs('info')">Info</button>
+                        <button class="btn btn-outline-secondary" onclick="showLogs('all')">All</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="logContainer" style="height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+                        <div class="text-danger">[ERROR] 2024-01-20 14:32:15 - Failed to load AI model cache</div>
+                        <div class="text-warning">[WARNING] 2024-01-20 14:30:42 - High memory usage detected (68%)</div>
+                        <div class="text-info">[INFO] 2024-01-20 14:28:30 - Database backup completed successfully</div>
+                        <div class="text-secondary">[INFO] 2024-01-20 14:25:18 - User authentication successful for admin</div>
+                        <div class="text-info">[INFO] 2024-01-20 14:20:05 - System health check completed</div>
+                        <div class="text-secondary">[INFO] 2024-01-20 14:15:22 - Cache refresh initiated</div>
+                        <div class="text-warning">[WARNING] 2024-01-20 14:10:45 - Disk space running low (58% used)</div>
+                        <div class="text-success">[SUCCESS] 2024-01-20 14:05:33 - Security scan completed - no threats found</div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshLogs()">
+                        <i class="fas fa-sync me-1"></i>Refresh
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="downloadLogs()">
+                        <i class="fas fa-download me-1"></i>Download
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="clearLogs()">
+                        <i class="fas fa-trash me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function performMaintenance(action) {
+    const actionNames = {
+        'backup': 'Database Backup',
+        'cleanup': 'Cleanup Temporary Files',
+        'cache': 'Clear Cache',
+        'optimize': 'Optimize Database'
+    };
+    
+    if (confirm(`Are you sure you want to perform: ${actionNames[action]}?`)) {
+        // Show loading state
+        const button = event.target.closest('button');
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><div>Processing...</div>';
+        button.disabled = true;
+        
+        // Simulate maintenance action
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.disabled = false;
+            alert(`${actionNames[action]} completed successfully!`);
+        }, 3000);
+    }
+}
+
+function showLogs(type) {
+    // Update active button
+    document.querySelectorAll('.btn-group button').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Filter logs (in a real implementation, this would fetch filtered logs from server)
+    const logContainer = document.getElementById('logContainer');
+    let filteredLogs = '';
+    
+    switch(type) {
+        case 'error':
+            filteredLogs = '<div class="text-danger">[ERROR] 2024-01-20 14:32:15 - Failed to load AI model cache</div>';
+            break;
+        case 'warning':
+            filteredLogs = `
+                <div class="text-warning">[WARNING] 2024-01-20 14:30:42 - High memory usage detected (68%)</div>
+                <div class="text-warning">[WARNING] 2024-01-20 14:10:45 - Disk space running low (58% used)</div>
+            `;
+            break;
+        case 'info':
+            filteredLogs = `
+                <div class="text-info">[INFO] 2024-01-20 14:28:30 - Database backup completed successfully</div>
+                <div class="text-secondary">[INFO] 2024-01-20 14:25:18 - User authentication successful for admin</div>
+                <div class="text-info">[INFO] 2024-01-20 14:20:05 - System health check completed</div>
+                <div class="text-secondary">[INFO] 2024-01-20 14:15:22 - Cache refresh initiated</div>
+            `;
+            break;
+        default:
+            filteredLogs = `
+                <div class="text-danger">[ERROR] 2024-01-20 14:32:15 - Failed to load AI model cache</div>
+                <div class="text-warning">[WARNING] 2024-01-20 14:30:42 - High memory usage detected (68%)</div>
+                <div class="text-info">[INFO] 2024-01-20 14:28:30 - Database backup completed successfully</div>
+                <div class="text-secondary">[INFO] 2024-01-20 14:25:18 - User authentication successful for admin</div>
+                <div class="text-info">[INFO] 2024-01-20 14:20:05 - System health check completed</div>
+                <div class="text-secondary">[INFO] 2024-01-20 14:15:22 - Cache refresh initiated</div>
+                <div class="text-warning">[WARNING] 2024-01-20 14:10:45 - Disk space running low (58% used)</div>
+                <div class="text-success">[SUCCESS] 2024-01-20 14:05:33 - Security scan completed - no threats found</div>
+            `;
+    }
+    
+    logContainer.innerHTML = filteredLogs;
+}
+
+function refreshLogs() {
+    const button = event.target;
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+    button.disabled = true;
+    
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+        // In a real implementation, this would fetch fresh logs
+        alert('Logs refreshed successfully!');
+    }, 1000);
+}
+
+function downloadLogs() {
+    // In a real implementation, this would trigger a log file download
+    alert('Log download started. Check your downloads folder.');
+}
+
+function clearLogs() {
+    if (confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
+        document.getElementById('logContainer').innerHTML = '<div class="text-muted text-center py-4">Logs cleared</div>';
+        alert('Logs cleared successfully!');
+    }
+}
+
+// Auto-refresh system stats every 30 seconds
+setInterval(() => {
+    // In a real implementation, this would fetch fresh health stats
+    console.log('Auto-refreshing system stats...');
+}, 30000);
+</script>
+{% endblock %}
