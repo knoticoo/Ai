@@ -271,7 +271,6 @@ class UserAchievement(db.Model):
     achievement_id = db.Column(db.Integer, db.ForeignKey('achievement.id'), nullable=False)
     earned_date = db.Column(db.DateTime, default=datetime.utcnow)
     
-    user = db.relationship('User', backref='user_achievements')
     achievement = db.relationship('Achievement', backref='user_achievements')
 
 class SkillTree(db.Model):
@@ -295,7 +294,6 @@ class UserSkill(db.Model):
     experience = db.Column(db.Integer, default=0)
     unlocked_date = db.Column(db.DateTime, default=datetime.utcnow)
     
-    user = db.relationship('User', backref='user_skills')
     skill = db.relationship('SkillTree', backref='user_skills')
 
 class ArtBattle(db.Model):
@@ -323,8 +321,6 @@ class BattleSubmission(db.Model):
     votes = db.Column(db.Integer, default=0)
     
     battle = db.relationship('ArtBattle', backref='submissions')
-    user = db.relationship('User', backref='battle_submissions')
-    artwork = db.relationship('Artwork', backref='battle_submissions')
 
 class BattleVote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -335,7 +331,6 @@ class BattleVote(db.Model):
     
     battle = db.relationship('ArtBattle')
     submission = db.relationship('BattleSubmission')
-    voter = db.relationship('User')
 
 class UserStats(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -349,8 +344,6 @@ class UserStats(db.Model):
     battles_won = db.Column(db.Integer, default=0)
     battles_participated = db.Column(db.Integer, default=0)
     challenges_completed = db.Column(db.Integer, default=0)
-    
-    user = db.relationship('User', backref=db.backref('stats', uselist=False))
 
 @login_manager.user_loader
 def load_user(user_id):
