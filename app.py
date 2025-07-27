@@ -709,13 +709,26 @@ def submit_challenge(challenge_id):
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(filepath)
         
+        # Try to analyze artwork with AI (optional for challenges)
+        ai_feedback = "Challenge submission"
+        ai_score = 0.0
+        try:
+            ai_analysis = ai_analyzer.analyze_artwork(filepath)
+            ai_feedback = ai_analysis.get('feedback', 'Challenge submission')
+            ai_score = ai_analysis.get('score', 0.0)
+        except Exception as e:
+            print(f"AI analysis failed for challenge submission: {e}")
+            # Continue without AI analysis for challenges
+        
         # Create artwork first
         artwork = Artwork(
             title=f"Challenge: {challenge.title}",
             description=request.form.get('description', ''),
             filename=unique_filename,
             user_id=current_user.id,
-            category='Challenge'
+            category='Challenge',
+            ai_feedback=ai_feedback,
+            ai_score=ai_score
         )
         db.session.add(artwork)
         db.session.flush()  # Get the artwork ID
@@ -2245,6 +2258,98 @@ def admin_ai_learning_path():
     
     return render_template('admin_ai_learning_path.html')
 
+@app.route('/start_learning', methods=['GET', 'POST'])
+@login_required
+def start_learning():
+    """User-facing learning path creation with AI"""
+    if request.method == 'POST':
+        topic = request.form.get('topic', '').strip()
+        skill_level = request.form.get('skill_level', 'Beginner')
+        interests = request.form.get('interests', '').strip()
+        
+        if not topic:
+            flash('Please specify what you want to learn')
+            return render_template('start_learning.html')
+        
+        try:
+            # Generate personalized learning path with AI
+            description = f"Personalized learning path for {current_user.username}"
+            if interests:
+                description += f" with focus on {interests}"
+                
+            ai_content = ai_guide_generator.generate_comprehensive_learning_path(
+                topic, skill_level, description
+            )
+            
+            # Check if learning path already exists for this user and topic
+            existing_path = LearningPath.query.filter(
+                LearningPath.title.ilike(f"%{topic}%"),
+                LearningPath.difficulty == skill_level
+            ).first()
+            
+            if existing_path:
+                # Check if user already enrolled
+                existing_progress = UserPathProgress.query.filter_by(
+                    user_id=current_user.id,
+                    path_id=existing_path.id
+                ).first()
+                
+                if existing_progress:
+                    flash(f'You are already enrolled in "{existing_path.title}"!')
+                    return redirect(url_for('ai_guide', path_id=existing_path.id))
+                else:
+                    # Enroll user in existing path
+                    progress = UserPathProgress(
+                        user_id=current_user.id,
+                        path_id=existing_path.id
+                    )
+                    db.session.add(progress)
+                    db.session.commit()
+                    flash(f'Enrolled in existing course: "{existing_path.title}"!')
+                    return redirect(url_for('ai_guide', path_id=existing_path.id))
+            
+            # Create new learning path
+            learning_path = LearningPath(
+                title=ai_content['title'],
+                description=ai_content['description'],
+                difficulty=skill_level,
+                order=LearningPath.query.count() + 1,
+                category=ai_content.get('category', 'Personalized'),
+                estimated_hours=ai_content.get('estimated_hours', 2)
+            )
+            db.session.add(learning_path)
+            db.session.flush()
+            
+            # Create lessons
+            for lesson_data in ai_content.get('lessons', []):
+                lesson = Lesson(
+                    path_id=learning_path.id,
+                    title=lesson_data['title'],
+                    content=lesson_data['content'],
+                    lesson_type=lesson_data.get('type', 'theory'),
+                    order=lesson_data['order'],
+                    estimated_minutes=lesson_data.get('estimated_minutes', 15),
+                    completion_xp=lesson_data.get('xp', 10)
+                )
+                db.session.add(lesson)
+            
+            # Enroll user in the new path
+            progress = UserPathProgress(
+                user_id=current_user.id,
+                path_id=learning_path.id
+            )
+            db.session.add(progress)
+            db.session.commit()
+            
+            flash(f'🎉 Created your personalized learning path: "{ai_content["title"]}"!')
+            return redirect(url_for('ai_guide', path_id=learning_path.id))
+            
+        except Exception as e:
+            flash(f'Error creating your learning path: {str(e)}')
+            return render_template('start_learning.html')
+    
+    return render_template('start_learning.html')
+
 @app.route('/admin/analytics')
 @login_required
 def admin_analytics():
@@ -2278,11 +2383,33 @@ def admin_analytics():
         'total_submissions': BattleSubmission.query.count()
     }
     
+    # Engagement statistics
+    engagement_stats = {
+        'total_likes': 0,  # Would need to implement likes system
+        'total_comments': Comment.query.count() if 'Comment' in globals() else 0,
+        'total_shares': 0,  # Would need to implement sharing system
+        'total_views': 0   # Would need to implement view tracking
+    }
+    
+    # Basic analytics data
+    analytics_data = {
+        'total_users': User.query.count(),
+        'total_artworks': Artwork.query.count(),
+        'active_challenges': Challenge.query.filter_by(is_active=True).count(),
+        'active_battles': ArtBattle.query.filter(ArtBattle.end_date > datetime.utcnow()).count(),
+        'new_users_this_week': User.query.filter(User.join_date >= datetime.utcnow() - timedelta(days=7)).count(),
+        'new_artworks_this_week': Artwork.query.filter(Artwork.upload_date >= datetime.utcnow() - timedelta(days=7)).count(),
+        'total_challenge_submissions': ChallengeSubmission.query.count(),
+        'total_battle_participants': BattleSubmission.query.count()
+    }
+    
     return render_template('admin_analytics.html', 
                          user_growth=user_growth, 
                          top_users=top_users,
                          popular_paths=popular_paths,
-                         battle_stats=battle_stats)
+                         battle_stats=battle_stats,
+                         engagement_stats=engagement_stats,
+                         **analytics_data)
 
 @app.route('/admin/user/<int:user_id>/toggle_admin', methods=['POST'])
 @login_required

@@ -371,10 +371,18 @@
                             </a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('roadmap') }}">
-                            <i class="fas fa-road me-1"></i>Learn
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="learnDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-graduation-cap me-1"></i>Learn
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('start_learning') }}">
+                                <i class="fas fa-magic me-2 text-primary"></i>Start Learning (AI)
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('roadmap') }}">
+                                <i class="fas fa-road me-2"></i>Learning Roadmap
+                            </a></li>
+                        </ul>
                     </li>
                 </ul>
                 

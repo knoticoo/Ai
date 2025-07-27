@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}Start Learning - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="text-center mb-5">
+        <h1 class="display-3 fw-bold text-gradient">🎨 Start Learning</h1>
+        <p class="lead text-muted mb-4">Tell us what you want to learn, and AI will create a personalized course just for you!</p>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="bg-light rounded-pill p-3 mb-4">
+                    <div class="row text-center">
+                        <div class="col">
+                            <i class="fas fa-magic fa-2x text-primary mb-2"></i>
+                            <div class="small fw-bold">AI-Powered</div>
+                        </div>
+                        <div class="col">
+                            <i class="fas fa-user fa-2x text-success mb-2"></i>
+                            <div class="small fw-bold">Personalized</div>
+                        </div>
+                        <div class="col">
+                            <i class="fas fa-rocket fa-2x text-warning mb-2"></i>
+                            <div class="small fw-bold">Instant</div>
+                        </div>
+                        <div class="col">
+                            <i class="fas fa-trophy fa-2x text-info mb-2"></i>
+                            <div class="small fw-bold">Progressive</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Learning Path Creator -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sparkles me-2"></i>Create Your Learning Journey
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" id="learningForm">
+                        <!-- What to Learn -->
+                        <div class="mb-4">
+                            <label for="topic" class="form-label fs-5 fw-bold">
+                                <i class="fas fa-lightbulb text-warning me-2"></i>What do you want to learn?
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="topic" 
+                                   name="topic" 
+                                   placeholder="e.g., Digital Art, Watercolor Painting, Character Design..."
+                                   required>
+                            <div class="form-text">Be specific about the art skill you want to develop</div>
+                        </div>
+                        
+                        <!-- Skill Level -->
+                        <div class="mb-4">
+                            <label for="skill_level" class="form-label fs-5 fw-bold">
+                                <i class="fas fa-chart-line text-success me-2"></i>What's your current skill level?
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="skill_level" id="beginner" value="Beginner" checked>
+                                    <label class="btn btn-outline-success w-100" for="beginner">
+                                        <i class="fas fa-seedling d-block mb-1"></i>
+                                        <small>Beginner</small>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="skill_level" id="intermediate" value="Intermediate">
+                                    <label class="btn btn-outline-warning w-100" for="intermediate">
+                                        <i class="fas fa-tree d-block mb-1"></i>
+                                        <small>Intermediate</small>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="skill_level" id="advanced" value="Advanced">
+                                    <label class="btn btn-outline-danger w-100" for="advanced">
+                                        <i class="fas fa-mountain d-block mb-1"></i>
+                                        <small>Advanced</small>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="skill_level" id="expert" value="Expert">
+                                    <label class="btn btn-outline-dark w-100" for="expert">
+                                        <i class="fas fa-crown d-block mb-1"></i>
+                                        <small>Expert</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Special Interests -->
+                        <div class="mb-4">
+                            <label for="interests" class="form-label fs-5 fw-bold">
+                                <i class="fas fa-heart text-danger me-2"></i>Any special interests or focus areas? (Optional)
+                            </label>
+                            <textarea class="form-control" 
+                                      id="interests" 
+                                      name="interests" 
+                                      rows="3"
+                                      placeholder="e.g., anime style, portraits, landscapes, abstract art, specific techniques..."></textarea>
+                            <div class="form-text">Help us personalize your learning experience</div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                <i class="fas fa-magic me-2"></i>
+                                <span id="submitText">Create My Learning Path</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Popular Topics Sidebar -->
+        <div class="col-lg-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-fire text-danger me-2"></i>Popular Learning Topics
+                    </h5>
+                    <div class="popular-topics mb-4">
+                        <div class="topic-tag" data-topic="Digital Art Fundamentals">
+                            <i class="fas fa-desktop"></i> Digital Art Fundamentals
+                        </div>
+                        <div class="topic-tag" data-topic="Watercolor Techniques">
+                            <i class="fas fa-tint"></i> Watercolor Techniques
+                        </div>
+                        <div class="topic-tag" data-topic="Portrait Drawing">
+                            <i class="fas fa-portrait"></i> Portrait Drawing
+                        </div>
+                        <div class="topic-tag" data-topic="Character Design">
+                            <i class="fas fa-user-ninja"></i> Character Design
+                        </div>
+                        <div class="topic-tag" data-topic="Color Theory">
+                            <i class="fas fa-palette"></i> Color Theory
+                        </div>
+                        <div class="topic-tag" data-topic="Landscape Painting">
+                            <i class="fas fa-mountain"></i> Landscape Painting
+                        </div>
+                        <div class="topic-tag" data-topic="Figure Drawing">
+                            <i class="fas fa-running"></i> Figure Drawing
+                        </div>
+                        <div class="topic-tag" data-topic="Abstract Art">
+                            <i class="fas fa-shapes"></i> Abstract Art
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-preview">
+                        <h6 class="text-muted">
+                            <i class="fas fa-trophy text-warning me-2"></i>You'll Earn
+                        </h6>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="p-2 rounded bg-white">
+                                    <i class="fas fa-medal text-warning fa-lg"></i>
+                                    <div class="small">XP Points</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 rounded bg-white">
+                                    <i class="fas fa-certificate text-success fa-lg"></i>
+                                    <div class="small">Skills</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 rounded bg-white">
+                                    <i class="fas fa-star text-info fa-lg"></i>
+                                    <div class="small">Progress</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Your Current Learning -->
+            {% if current_user.is_authenticated %}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-book-open text-primary me-2"></i>Your Learning
+                    </h6>
+                    {% set user_progress = current_user.user_skills %}
+                    {% if user_progress %}
+                        <div class="small text-muted mb-2">Continue your journey:</div>
+                        {% for progress in user_progress[:3] %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">{{ progress.skill.name }}</span>
+                            <span class="badge bg-primary">Level {{ progress.level }}</span>
+                        </div>
+                        {% endfor %}
+                        <a href="{{ url_for('roadmap') }}" class="btn btn-sm btn-outline-primary w-100 mt-2">
+                            View All Courses
+                        </a>
+                    {% else %}
+                        <p class="small text-muted mb-2">This will be your first learning path!</p>
+                        <div class="text-center">
+                            <i class="fas fa-graduation-cap fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.topic-tag {
+    display: inline-block;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 8px 16px;
+    margin: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.topic-tag:hover {
+    background: var(--bs-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.topic-tag i {
+    margin-right: 8px;
+}
+
+.btn-check:checked + .btn {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.achievement-preview .row > div {
+    padding: 0 4px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.loading {
+    animation: pulse 2s infinite;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Topic suggestion clicks
+    document.querySelectorAll('.topic-tag').forEach(tag => {
+        tag.addEventListener('click', function() {
+            const topic = this.dataset.topic;
+            document.getElementById('topic').value = topic;
+            document.getElementById('topic').focus();
+            
+            // Visual feedback
+            this.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+    });
+    
+    // Form submission with loading state
+    document.getElementById('learningForm').addEventListener('submit', function() {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const submitText = document.getElementById('submitText');
+        
+        submitText.textContent = 'Creating Your Course...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+        
+        // Add spinner
+        const spinner = document.createElement('i');
+        spinner.className = 'fas fa-spinner fa-spin me-2';
+        submitBtn.insertBefore(spinner, submitText);
+    });
+    
+    // Auto-focus on topic input
+    document.getElementById('topic').focus();
+    
+    // Smooth scroll for long forms
+    const formInputs = document.querySelectorAll('input, textarea');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            setTimeout(() => {
+                this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        });
+    });
+});
+</script>
+{% endblock %}
