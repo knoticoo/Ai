@@ -43,6 +43,7 @@ class User(UserMixin, db.Model):
     profile_picture = db.Column(db.String(200), default='default.jpg')
     bio = db.Column(db.Text, default='')
     join_date = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # For template compatibility
     is_admin = db.Column(db.Boolean, default=False)
     level = db.Column(db.Integer, default=1)
     experience = db.Column(db.Integer, default=0)
@@ -2238,16 +2239,290 @@ def user_activity_api():
     
     return jsonify(activity_data)
 
+# Advanced Drawing Features
+@app.route('/draw')
+@login_required
+def advanced_drawing():
+    """Advanced drawing studio with AI features"""
+    return render_template('advanced_drawing.html')
+
+@app.route('/api/save_drawing', methods=['POST'])
+@login_required
+def save_drawing():
+    """Save drawing from canvas"""
+    try:
+        data = request.get_json()
+        image_data = data.get('image_data')
+        title = data.get('title', 'Untitled Drawing')
+        
+        if not image_data:
+            return jsonify({'error': 'No image data provided'}), 400
+        
+        # Remove data URL prefix
+        if image_data.startswith('data:image/png;base64,'):
+            image_data = image_data.replace('data:image/png;base64,', '')
+        
+        # Generate unique filename
+        filename = f"drawing_{current_user.id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Save image
+        with open(filepath, 'wb') as f:
+            f.write(base64.b64decode(image_data))
+        
+        # Create artwork record
+        artwork = Artwork(
+            title=title,
+            description="Created with Advanced Drawing Studio",
+            filename=filename,
+            user_id=current_user.id,
+            category='Digital Art'
+        )
+        db.session.add(artwork)
+        
+        # Update user stats
+        update_user_stats(current_user.id, 'artwork_uploaded')
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'artwork_id': artwork.id})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ai_analyze_drawing', methods=['POST'])
+@login_required
+def ai_analyze_drawing():
+    """Analyze drawing and provide AI suggestions"""
+    try:
+        data = request.get_json()
+        image_data = data.get('image_data')
+        
+        if not image_data:
+            return jsonify({'error': 'No image data provided'}), 400
+        
+        # Simulate AI analysis (replace with actual AI service)
+        suggestions = [
+            "Consider adding more contrast to make the subject stand out",
+            "The composition could benefit from the rule of thirds",
+            "Try adding highlights to create more depth",
+            "The color palette is well balanced",
+            "Consider adding shadows for more realism"
+        ]
+        
+        return jsonify({'suggestions': suggestions})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ai_style_transfer', methods=['POST'])
+@login_required
+def ai_style_transfer():
+    """Apply AI style transfer to drawing"""
+    try:
+        data = request.get_json()
+        image_data = data.get('image_data')
+        style = data.get('style', 'Van Gogh')
+        
+        if not image_data:
+            return jsonify({'error': 'No image data provided'}), 400
+        
+        # Simulate style transfer (replace with actual AI service)
+        # For now, just return the original image with a message
+        return jsonify({
+            'styled_image': image_data,
+            'message': f'Style transfer with {style} style applied (simulated)'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Social Features
+@app.route('/social')
+@login_required
+def social_hub():
+    """Social hub with friends, groups, and messaging"""
+    # Get user's friends
+    friends = []  # Would implement friend system
+    
+    # Get recent activity from friends
+    friend_activity = []  # Would get friend activities
+    
+    # Get suggested users to follow
+    suggested_users = User.query.filter(
+        User.id != current_user.id,
+        User.is_admin == False
+    ).order_by(db.func.random()).limit(5).all()
+    
+    return render_template('social_hub.html', 
+                         friends=friends,
+                         friend_activity=friend_activity,
+                         suggested_users=suggested_users)
+
+# Portfolio Features
+@app.route('/portfolio/<username>')
+def user_portfolio(username):
+    """Enhanced user portfolio with collections and themes"""
+    user = User.query.filter_by(username=username).first_or_404()
+    
+    # Get user's artworks organized by collections
+    artworks = Artwork.query.filter_by(user_id=user.id).order_by(Artwork.upload_date.desc()).all()
+    
+    # Get user's achievements
+    user_achievements = db.session.query(UserAchievement, Achievement).join(
+        Achievement
+    ).filter(UserAchievement.user_id == user.id).all()
+    
+    # Get user's stats
+    stats = UserStats.query.filter_by(user_id=user.id).first()
+    if not stats:
+        stats = UserStats(user_id=user.id)
+        db.session.add(stats)
+        db.session.commit()
+    
+    # Get user's learning progress
+    learning_progress = UserLearningProgress.query.filter_by(user_id=user.id).all()
+    
+    return render_template('enhanced_portfolio.html',
+                         user=user,
+                         artworks=artworks,
+                         user_achievements=user_achievements,
+                         stats=stats,
+                         learning_progress=learning_progress)
+
+# Art Marketplace
+@app.route('/marketplace')
+def art_marketplace():
+    """Art marketplace for buying/selling artwork"""
+    # Get featured artworks
+    featured_artworks = Artwork.query.filter(
+        Artwork.ai_score >= 8.0
+    ).order_by(Artwork.upload_date.desc()).limit(6).all()
+    
+    # Get recent artworks
+    recent_artworks = Artwork.query.order_by(
+        Artwork.upload_date.desc()
+    ).limit(12).all()
+    
+    # Get categories
+    categories = db.session.query(Artwork.category).distinct().all()
+    categories = [cat[0] for cat in categories if cat[0]]
+    
+    return render_template('marketplace.html',
+                         featured_artworks=featured_artworks,
+                         recent_artworks=recent_artworks,
+                         categories=categories)
+
+# Live Streaming
+@app.route('/stream')
+@login_required
+def live_stream():
+    """Live streaming interface for artists"""
+    return render_template('live_stream.html')
+
+@app.route('/api/start_stream', methods=['POST'])
+@login_required
+def start_stream():
+    """Start a live art stream"""
+    try:
+        data = request.get_json()
+        title = data.get('title', 'Untitled Stream')
+        description = data.get('description', '')
+        
+        # Create stream record (would integrate with streaming service)
+        stream_data = {
+            'stream_id': f"stream_{current_user.id}_{datetime.utcnow().timestamp()}",
+            'title': title,
+            'description': description,
+            'streamer': current_user.username,
+            'start_time': datetime.utcnow().isoformat(),
+            'status': 'live'
+        }
+        
+        return jsonify(stream_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Art Challenges System
+@app.route('/daily_challenge')
+def daily_challenge():
+    """Daily art challenge with themes and prompts"""
+    today = datetime.utcnow().date()
+    
+    # Get today's challenge or create one
+    challenge = Challenge.query.filter(
+        db.func.date(Challenge.start_date) == today
+    ).first()
+    
+    if not challenge:
+        # Create daily challenge
+        themes = [
+            "Draw something blue", "Minimalist landscape", "Character portrait",
+            "Abstract emotions", "Favorite food", "Dream house", "Mythical creature",
+            "Retro futurism", "Nature scene", "Urban architecture"
+        ]
+        theme = themes[today.day % len(themes)]
+        
+        challenge = Challenge(
+            title=f"Daily Challenge - {theme}",
+            description=f"Today's theme: {theme}. Create your interpretation!",
+            requirements=f"Create artwork inspired by: {theme}",
+            end_date=datetime.combine(today + timedelta(days=1), datetime.min.time()),
+            difficulty='Beginner',
+            reward_exp=50
+        )
+        db.session.add(challenge)
+        db.session.commit()
+    
+    # Get today's submissions
+    submissions = ChallengeSubmission.query.filter_by(
+        challenge_id=challenge.id
+    ).join(Artwork).order_by(Artwork.upload_date.desc()).all()
+    
+    return render_template('daily_challenge.html',
+                         challenge=challenge,
+                         submissions=submissions)
+
+# Collaborative Drawing
+@app.route('/collaborate')
+@login_required
+def collaborative_drawing():
+    """Real-time collaborative drawing rooms"""
+    return render_template('collaborative_drawing.html')
+
+@app.route('/api/create_collab_room', methods=['POST'])
+@login_required
+def create_collab_room():
+    """Create a collaborative drawing room"""
+    try:
+        data = request.get_json()
+        room_name = data.get('name', 'Untitled Room')
+        max_users = data.get('max_users', 4)
+        
+        room_data = {
+            'room_id': f"room_{current_user.id}_{datetime.utcnow().timestamp()}",
+            'name': room_name,
+            'creator': current_user.username,
+            'max_users': max_users,
+            'current_users': 1,
+            'created_at': datetime.utcnow().isoformat()
+        }
+        
+        return jsonify(room_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 def migrate_database():
     """Handle database schema migrations"""
     try:
-        # Check if learning_path table exists and get its columns
         with db.engine.connect() as conn:
+            # Migrate learning_path table
             result = conn.execute(db.text("PRAGMA table_info(learning_path)"))
-            existing_columns = [row[1] for row in result]
+            existing_lp_columns = [row[1] for row in result]
             
-            # Define expected columns with their SQL definitions
-            expected_columns = {
+            lp_expected_columns = {
                 'category': "VARCHAR(50) DEFAULT 'General'",
                 'estimated_hours': "INTEGER DEFAULT 1",
                 'thumbnail_url': "VARCHAR(200)",
@@ -2256,19 +2531,34 @@ def migrate_database():
                 'created_at': "DATETIME DEFAULT CURRENT_TIMESTAMP"
             }
             
-            # Add missing columns
-            columns_added = []
-            for column_name, column_def in expected_columns.items():
-                if column_name not in existing_columns:
+            lp_columns_added = []
+            for column_name, column_def in lp_expected_columns.items():
+                if column_name not in existing_lp_columns:
                     print(f"🔄 Adding missing '{column_name}' column to learning_path table...")
                     conn.execute(db.text(f"ALTER TABLE learning_path ADD COLUMN {column_name} {column_def}"))
-                    columns_added.append(column_name)
+                    lp_columns_added.append(column_name)
             
-            if columns_added:
+            # Migrate user table
+            result = conn.execute(db.text("PRAGMA table_info(user)"))
+            existing_user_columns = [row[1] for row in result]
+            
+            user_expected_columns = {
+                'created_at': "DATETIME DEFAULT CURRENT_TIMESTAMP"
+            }
+            
+            user_columns_added = []
+            for column_name, column_def in user_expected_columns.items():
+                if column_name not in existing_user_columns:
+                    print(f"🔄 Adding missing '{column_name}' column to user table...")
+                    conn.execute(db.text(f"ALTER TABLE user ADD COLUMN {column_name} {column_def}"))
+                    user_columns_added.append(column_name)
+            
+            if lp_columns_added or user_columns_added:
                 conn.commit()
-                print(f"✅ Added columns: {', '.join(columns_added)}")
+                all_added = lp_columns_added + user_columns_added
+                print(f"✅ Added columns: {', '.join(all_added)}")
             else:
-                print("✅ All learning_path columns are up to date!")
+                print("✅ All database columns are up to date!")
                 
     except Exception as e:
         print(f"⚠️ Migration check failed: {e}")
