@@ -317,24 +317,65 @@
                             <i class="fas fa-home me-1"></i>Home
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="createDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-plus me-1"></i>Create
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('advanced_drawing') }}">
+                                <i class="fas fa-paint-brush me-2"></i>Advanced Drawing Studio
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('upload_artwork') }}">
+                                <i class="fas fa-upload me-2"></i>Upload Artwork
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('collaborative_drawing') }}">
+                                <i class="fas fa-users me-2"></i>Collaborative Drawing
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('live_stream') }}">
+                                <i class="fas fa-video me-2"></i>Start Live Stream
+                            </a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('gallery') }}">
                             <i class="fas fa-images me-1"></i>Gallery
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('challenges') }}">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="challengesDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-trophy me-1"></i>Challenges
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('challenges') }}">
+                                <i class="fas fa-list me-2"></i>All Challenges
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('daily_challenge') }}">
+                                <i class="fas fa-calendar-day me-2"></i>Daily Challenge
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('battles') }}">
+                                <i class="fas fa-sword me-2"></i>Art Battles
+                            </a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('forum') }}">
-                            <i class="fas fa-comments me-1"></i>Forum
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="socialDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-users me-1"></i>Social
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('social_hub') }}">
+                                <i class="fas fa-heart me-2"></i>Social Hub
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('forum') }}">
+                                <i class="fas fa-comments me-2"></i>Forum
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('art_marketplace') }}">
+                                <i class="fas fa-store me-2"></i>Marketplace
+                            </a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('roadmap') }}">
-                            <i class="fas fa-road me-1"></i>Roadmap
+                            <i class="fas fa-road me-1"></i>Learn
                         </a>
                     </li>
                 </ul>
@@ -354,9 +395,22 @@
                                 <li><a class="dropdown-item" href="{{ url_for('profile', username=current_user.username) }}">
                                     <i class="fas fa-user-circle me-2"></i>Profile
                                 </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('user_portfolio', username=current_user.username) }}">
+                                    <i class="fas fa-briefcase me-2"></i>Portfolio
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('notifications') }}">
+                                    <i class="fas fa-bell me-2"></i>Notifications
+                                </a></li>
                                 {% if current_user.is_admin %}
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ url_for('admin_panel') }}">
                                     <i class="fas fa-cog me-2"></i>Admin Panel
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_analytics') }}">
+                                    <i class="fas fa-chart-bar me-2"></i>Analytics
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('maintenance_panel') }}">
+                                    <i class="fas fa-tools me-2"></i>Maintenance
                                 </a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>

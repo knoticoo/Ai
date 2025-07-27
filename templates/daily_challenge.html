@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Challenge - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-calendar-day"></i> Daily Art Challenge
+            </h1>
+        </div>
+    </div>
+
+    {% if challenge %}
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card challenge-card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">{{ challenge.title }}</h3>
+                    <small>{{ challenge.start_date.strftime('%B %d, %Y') }}</small>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ challenge.description }}</p>
+                    
+                    {% if challenge.requirements %}
+                    <div class="mb-3">
+                        <h5><i class="fas fa-list-check"></i> Requirements:</h5>
+                        <p>{{ challenge.requirements }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <i class="fas fa-signal text-warning"></i>
+                                <strong>Difficulty:</strong> {{ challenge.difficulty }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <i class="fas fa-gem text-success"></i>
+                                <strong>Reward:</strong> {{ challenge.reward_exp }} XP
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('advanced_drawing') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paint-brush me-2"></i>Start Creating
+                        </a>
+                        <a href="{{ url_for('upload_artwork') }}" class="btn btn-outline-primary btn-lg ms-2">
+                            <i class="fas fa-upload me-2"></i>Submit Artwork
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Challenge Timer</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div id="countdown" class="countdown-timer">
+                        <div class="time-unit">
+                            <span id="hours">00</span>
+                            <small>Hours</small>
+                        </div>
+                        <div class="time-unit">
+                            <span id="minutes">00</span>
+                            <small>Minutes</small>
+                        </div>
+                        <div class="time-unit">
+                            <span id="seconds">00</span>
+                            <small>Seconds</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mt-2">Time remaining for today's challenge</p>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Challenge Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <strong>{{ submissions|length }}</strong>
+                        <span>Submissions</span>
+                    </div>
+                    <div class="stat-item">
+                        <strong>{{ submissions|map(attribute='user')|unique|list|length }}</strong>
+                        <span>Participants</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submissions -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="fas fa-images"></i> Today's Submissions
+            </h3>
+        </div>
+
+        {% if submissions %}
+            {% for submission in submissions %}
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card submission-card">
+                    <img src="{{ url_for('static', filename='uploads/' + submission.artwork.filename) }}" 
+                         class="card-img-top" alt="{{ submission.artwork.title }}" style="height: 250px; object-fit: cover;">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ submission.artwork.title }}</h6>
+                        <p class="text-muted small">by {{ submission.user.username }}</p>
+                        <p class="card-text small">{{ submission.artwork.description[:80] }}...</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ submission.submission_date.strftime('%I:%M %p') }}</small>
+                            <a href="{{ url_for('artwork_detail', id=submission.artwork.id) }}" class="btn btn-outline-primary btn-sm">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Submissions Yet</h5>
+                    <p class="text-muted">Be the first to take on today's challenge!</p>
+                    <a href="{{ url_for('advanced_drawing') }}" class="btn btn-primary">
+                        <i class="fas fa-paint-brush me-1"></i>Start Drawing
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.challenge-card {
+    border: 2px solid #007bff;
+    border-radius: 12px;
+}
+
+.info-item {
+    margin-bottom: 10px;
+}
+
+.info-item i {
+    margin-right: 8px;
+}
+
+.countdown-timer {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.time-unit {
+    text-align: center;
+}
+
+.time-unit span {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.time-unit small {
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.submission-card {
+    transition: transform 0.3s ease;
+}
+
+.submission-card:hover {
+    transform: translateY(-3px);
+}
+</style>
+
+<script>
+// Countdown timer
+function updateCountdown() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const timeDiff = tomorrow - now;
+    
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+    
+    document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+    document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+    document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+}
+
+// Update countdown every second
+setInterval(updateCountdown, 1000);
+updateCountdown(); // Initial call
+</script>
+{% endblock %}
