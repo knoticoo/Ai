@@ -1,0 +1,609 @@
+{% extends "base.html" %}
+
+{% block title %}AI Art Critique - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">🤖 AI Art Critique</h1>
+        <p class="lead text-muted">Get instant AI feedback and improvement suggestions for your artwork</p>
+    </div>
+    
+    <!-- Critique Interface -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-image me-2"></i>Upload Artwork for Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="uploadArea" class="upload-area text-center p-5 border-dashed">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>Drag & Drop Your Artwork Here</h5>
+                        <p class="text-muted">or click to browse files</p>
+                        <input type="file" id="artworkFile" accept="image/*" style="display: none;">
+                        <button class="btn btn-primary" onclick="document.getElementById('artworkFile').click()">
+                            <i class="fas fa-folder-open me-2"></i>Choose File
+                        </button>
+                    </div>
+                    
+                    <!-- Preview Area -->
+                    <div id="previewArea" class="mt-4" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Original Artwork</h6>
+                                <img id="originalImage" class="img-fluid rounded" alt="Original artwork">
+                            </div>
+                            <div class="col-md-6">
+                                <h6>AI Analysis Overlay</h6>
+                                <div class="position-relative">
+                                    <canvas id="analysisCanvas" class="img-fluid rounded border"></canvas>
+                                    <div class="analysis-controls mt-2">
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary active" data-overlay="composition">Composition</button>
+                                            <button class="btn btn-outline-success" data-overlay="color">Color</button>
+                                            <button class="btn btn-outline-warning" data-overlay="focus">Focus Points</button>
+                                            <button class="btn btn-outline-info" data-overlay="balance">Balance</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button id="analyzeBtn" class="btn btn-success btn-lg">
+                                <i class="fas fa-magic me-2"></i>Analyze with AI
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analysis Results -->
+        <div class="col-lg-4">
+            <div id="resultsPanel" class="results-panel" style="display: none;">
+                <!-- Overall Score -->
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <h5>Overall Score</h5>
+                        <div class="score-circle">
+                            <span id="overallScore">--</span>
+                            <div class="score-label">/ 100</div>
+                        </div>
+                        <div id="scoreDescription" class="text-muted mt-2"></div>
+                    </div>
+                </div>
+                
+                <!-- Detailed Analysis -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Detailed Analysis</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="analysis-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Composition</span>
+                                <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                                    <div id="compositionBar" class="progress-bar bg-primary" style="width: 0%"></div>
+                                </div>
+                                <span id="compositionScore">--</span>
+                            </div>
+                            <small id="compositionFeedback" class="text-muted d-block mt-1"></small>
+                        </div>
+                        
+                        <div class="analysis-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Color Harmony</span>
+                                <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                                    <div id="colorBar" class="progress-bar bg-success" style="width: 0%"></div>
+                                </div>
+                                <span id="colorScore">--</span>
+                            </div>
+                            <small id="colorFeedback" class="text-muted d-block mt-1"></small>
+                        </div>
+                        
+                        <div class="analysis-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Technical Skill</span>
+                                <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                                    <div id="techniqueBar" class="progress-bar bg-warning" style="width: 0%"></div>
+                                </div>
+                                <span id="techniqueScore">--</span>
+                            </div>
+                            <small id="techniqueFeedback" class="text-muted d-block mt-1"></small>
+                        </div>
+                        
+                        <div class="analysis-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Artistic Style</span>
+                                <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                                    <div id="styleBar" class="progress-bar bg-info" style="width: 0%"></div>
+                                </div>
+                                <span id="styleScore">--</span>
+                            </div>
+                            <small id="styleFeedback" class="text-muted d-block mt-1"></small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Improvement Suggestions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>Improvement Tips
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="improvementTips">
+                            <!-- Tips will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Style Analysis -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-palette text-primary me-2"></i>Style Analysis
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="styleAnalysis">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin text-muted"></i>
+                                <p class="text-muted mt-2">Analyzing artistic style...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Before/After Comparison -->
+    <div id="beforeAfterSection" class="mt-5" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>AI Enhancement Preview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Your Original</h6>
+                        <div class="comparison-container">
+                            <img id="beforeImage" class="img-fluid rounded" alt="Before">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>AI Enhanced Version</h6>
+                        <div class="comparison-container">
+                            <img id="afterImage" class="img-fluid rounded" alt="After">
+                            <div class="enhancement-overlay">
+                                <span class="badge bg-success">AI Enhanced</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i>Download Enhanced Version
+                    </button>
+                    <button class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-share me-2"></i>Share Comparison
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: var(--bs-primary);
+    background-color: #f8f9fa;
+}
+
+.upload-area.dragover {
+    border-color: var(--bs-success);
+    background-color: #d4edda;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border: 8px solid #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 2rem;
+    font-weight: bold;
+    position: relative;
+}
+
+.score-circle.excellent {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.score-circle.good {
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+.score-circle.needs-work {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.score-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.analysis-item {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.analysis-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.comparison-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.enhancement-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.border-dashed {
+    border-style: dashed !important;
+}
+
+#analysisCanvas {
+    max-width: 100%;
+    border: 1px solid #ddd;
+}
+
+.results-panel {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.btn-group-sm .btn {
+    font-size: 0.75rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('artworkFile');
+    const previewArea = document.getElementById('previewArea');
+    const originalImage = document.getElementById('originalImage');
+    const analysisCanvas = document.getElementById('analysisCanvas');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resultsPanel = document.getElementById('resultsPanel');
+    
+    // File upload handling
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('drop', handleDrop);
+    uploadArea.addEventListener('dragleave', handleDragLeave);
+    fileInput.addEventListener('change', handleFileSelect);
+    analyzeBtn.addEventListener('click', analyzeArtwork);
+    
+    // Overlay controls
+    document.querySelectorAll('[data-overlay]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-overlay]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateAnalysisOverlay(this.dataset.overlay);
+        });
+    });
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    }
+    
+    function handleDragLeave(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            processFile(files[0]);
+        }
+    }
+    
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file) {
+            processFile(file);
+        }
+    }
+    
+    function processFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            originalImage.src = e.target.result;
+            setupAnalysisCanvas(e.target.result);
+            previewArea.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function setupAnalysisCanvas(imageSrc) {
+        const ctx = analysisCanvas.getContext('2d');
+        const img = new Image();
+        img.onload = function() {
+            analysisCanvas.width = img.width;
+            analysisCanvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+        };
+        img.src = imageSrc;
+    }
+    
+    function analyzeArtwork() {
+        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+        analyzeBtn.disabled = true;
+        
+        // Simulate AI analysis
+        setTimeout(() => {
+            const mockAnalysis = generateMockAnalysis();
+            displayAnalysisResults(mockAnalysis);
+            
+            analyzeBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Analyze with AI';
+            analyzeBtn.disabled = false;
+            resultsPanel.style.display = 'block';
+            
+            // Show before/after section
+            setTimeout(() => {
+                document.getElementById('beforeAfterSection').style.display = 'block';
+                generateBeforeAfter();
+            }, 1000);
+        }, 3000);
+    }
+    
+    function generateMockAnalysis() {
+        return {
+            overall: Math.floor(Math.random() * 30) + 70, // 70-100
+            composition: Math.floor(Math.random() * 25) + 75,
+            color: Math.floor(Math.random() * 20) + 80,
+            technique: Math.floor(Math.random() * 30) + 70,
+            style: Math.floor(Math.random() * 25) + 75,
+            feedback: {
+                composition: "Strong use of rule of thirds. Consider adjusting the horizon line for better balance.",
+                color: "Excellent color harmony with complementary blues and oranges. The warm-cool contrast works well.",
+                technique: "Good brush control visible. Practice blending in the sky area for smoother transitions.",
+                style: "Shows influences of impressionism with visible brushstrokes and emphasis on light."
+            },
+            tips: [
+                "Try using a wider range of values to increase depth",
+                "Consider adding more detail to the foreground elements",
+                "Experiment with cooler colors in the shadows",
+                "The focal point could be strengthened with higher contrast"
+            ],
+            styleAnalysis: {
+                primary: "Impressionist",
+                influences: ["Post-Impressionist", "Plein Air"],
+                confidence: 85
+            }
+        };
+    }
+    
+    function displayAnalysisResults(analysis) {
+        // Overall score
+        const scoreElement = document.getElementById('overallScore');
+        const scoreCircle = scoreElement.parentElement;
+        scoreElement.textContent = analysis.overall;
+        
+        if (analysis.overall >= 90) {
+            scoreCircle.className = 'score-circle excellent';
+            document.getElementById('scoreDescription').textContent = 'Excellent work!';
+        } else if (analysis.overall >= 75) {
+            scoreCircle.className = 'score-circle good';
+            document.getElementById('scoreDescription').textContent = 'Good technique';
+        } else {
+            scoreCircle.className = 'score-circle needs-work';
+            document.getElementById('scoreDescription').textContent = 'Room for improvement';
+        }
+        
+        // Individual scores
+        updateScore('composition', analysis.composition, analysis.feedback.composition);
+        updateScore('color', analysis.color, analysis.feedback.color);
+        updateScore('technique', analysis.technique, analysis.feedback.technique);
+        updateScore('style', analysis.style, analysis.feedback.style);
+        
+        // Improvement tips
+        const tipsContainer = document.getElementById('improvementTips');
+        tipsContainer.innerHTML = analysis.tips.map(tip => 
+            `<div class="d-flex align-items-start mb-2">
+                <i class="fas fa-arrow-right text-primary me-2 mt-1"></i>
+                <small>${tip}</small>
+            </div>`
+        ).join('');
+        
+        // Style analysis
+        const styleContainer = document.getElementById('styleAnalysis');
+        styleContainer.innerHTML = `
+            <div class="text-center">
+                <h6 class="text-primary">${analysis.styleAnalysis.primary}</h6>
+                <div class="progress mb-2" style="height: 6px;">
+                    <div class="progress-bar bg-primary" style="width: ${analysis.styleAnalysis.confidence}%"></div>
+                </div>
+                <small class="text-muted">${analysis.styleAnalysis.confidence}% confidence</small>
+                <div class="mt-3">
+                    <small class="text-muted">Influences: ${analysis.styleAnalysis.influences.join(', ')}</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    function updateScore(category, score, feedback) {
+        document.getElementById(`${category}Score`).textContent = score;
+        document.getElementById(`${category}Bar`).style.width = score + '%';
+        document.getElementById(`${category}Feedback`).textContent = feedback;
+    }
+    
+    function updateAnalysisOverlay(type) {
+        const ctx = analysisCanvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, analysisCanvas.width, analysisCanvas.height);
+        
+        // Reset canvas
+        ctx.putImageData(imageData, 0, 0);
+        
+        // Add overlay based on type
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
+        
+        switch(type) {
+            case 'composition':
+                // Draw rule of thirds lines
+                drawRuleOfThirds(ctx);
+                break;
+            case 'color':
+                // Highlight color areas
+                highlightColorAreas(ctx);
+                break;
+            case 'focus':
+                // Mark focal points
+                markFocalPoints(ctx);
+                break;
+            case 'balance':
+                // Show balance lines
+                showBalanceLines(ctx);
+                break;
+        }
+    }
+    
+    function drawRuleOfThirds(ctx) {
+        const w = analysisCanvas.width;
+        const h = analysisCanvas.height;
+        
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        
+        // Vertical lines
+        ctx.beginPath();
+        ctx.moveTo(w/3, 0);
+        ctx.lineTo(w/3, h);
+        ctx.moveTo(2*w/3, 0);
+        ctx.lineTo(2*w/3, h);
+        
+        // Horizontal lines
+        ctx.moveTo(0, h/3);
+        ctx.lineTo(w, h/3);
+        ctx.moveTo(0, 2*h/3);
+        ctx.lineTo(w, 2*h/3);
+        ctx.stroke();
+        
+        ctx.setLineDash([]);
+    }
+    
+    function highlightColorAreas(ctx) {
+        // Simulate color analysis overlay
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+        ctx.fillRect(50, 50, 100, 100);
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
+        ctx.fillRect(200, 150, 120, 80);
+    }
+    
+    function markFocalPoints(ctx) {
+        // Mark potential focal points
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(analysisCanvas.width * 0.6, analysisCanvas.height * 0.4, 30, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        ctx.fillStyle = '#ff0000';
+        ctx.font = '14px Arial';
+        ctx.fillText('Primary Focus', analysisCanvas.width * 0.6 + 40, analysisCanvas.height * 0.4);
+    }
+    
+    function showBalanceLines(ctx) {
+        const w = analysisCanvas.width;
+        const h = analysisCanvas.height;
+        
+        ctx.strokeStyle = '#0066ff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]);
+        
+        // Draw balance indicators
+        ctx.beginPath();
+        ctx.moveTo(0, h/2);
+        ctx.lineTo(w, h/2);
+        ctx.moveTo(w/2, 0);
+        ctx.lineTo(w/2, h);
+        ctx.stroke();
+        
+        ctx.setLineDash([]);
+    }
+    
+    function generateBeforeAfter() {
+        document.getElementById('beforeImage').src = originalImage.src;
+        
+        // Simulate enhanced version (in reality, this would be AI-processed)
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            // Apply some enhancement effects
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Increase contrast and saturation slightly
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, data[i] * 1.1);     // Red
+                data[i + 1] = Math.min(255, data[i + 1] * 1.1); // Green
+                data[i + 2] = Math.min(255, data[i + 2] * 1.1); // Blue
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            document.getElementById('afterImage').src = canvas.toDataURL();
+        };
+        
+        img.src = originalImage.src;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}Study Groups - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-4 fw-bold">👥 Study Groups</h1>
+            <p class="lead text-muted">Join or create study groups to learn together with fellow artists</p>
+        </div>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+            <i class="fas fa-plus me-2"></i>Create Group
+        </button>
+    </div>
+    
+    <!-- Filter Tabs -->
+    <ul class="nav nav-pills mb-4" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#all-groups">
+                <i class="fas fa-list me-2"></i>All Groups
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#my-groups">
+                <i class="fas fa-user me-2"></i>My Groups
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#recommended">
+                <i class="fas fa-magic me-2"></i>Recommended
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- All Groups -->
+        <div class="tab-pane fade show active" id="all-groups">
+            <div class="row">
+                <!-- Study Group Cards -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card study-group-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-success">Active</span>
+                            <small class="text-muted">8/12 members</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Digital Art Fundamentals</h5>
+                            <p class="card-text">Learn the basics of digital art together. Weekly challenges and peer reviews.</p>
+                            
+                            <div class="group-tags mb-3">
+                                <span class="badge bg-primary me-1">Beginner</span>
+                                <span class="badge bg-info me-1">Digital Art</span>
+                                <span class="badge bg-warning text-dark">Weekly</span>
+                            </div>
+                            
+                            <div class="group-stats mb-3">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="stat-number">24</div>
+                                        <small class="text-muted">Posts</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-number">5</div>
+                                        <small class="text-muted">Challenges</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-number">4.8</div>
+                                        <small class="text-muted">Rating</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="member-avatars mb-3">
+                                <div class="avatar-stack">
+                                    <img src="https://via.placeholder.com/32x32/FF6B6B/FFFFFF?text=A" class="avatar-sm rounded-circle" alt="Member">
+                                    <img src="https://via.placeholder.com/32x32/4ECDC4/FFFFFF?text=B" class="avatar-sm rounded-circle" alt="Member">
+                                    <img src="https://via.placeholder.com/32x32/45B7D1/FFFFFF?text=C" class="avatar-sm rounded-circle" alt="Member">
+                                    <span class="avatar-sm rounded-circle bg-light text-muted d-flex align-items-center justify-content-center">+5</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary w-100">Join Group</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card study-group-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-warning text-dark">Recruiting</span>
+                            <small class="text-muted">3/8 members</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Watercolor Masters</h5>
+                            <p class="card-text">Explore traditional watercolor techniques and share your progress with fellow enthusiasts.</p>
+                            
+                            <div class="group-tags mb-3">
+                                <span class="badge bg-success me-1">Intermediate</span>
+                                <span class="badge bg-info me-1">Watercolor</span>
+                                <span class="badge bg-warning text-dark">Bi-weekly</span>
+                            </div>
+                            
+                            <div class="group-stats mb-3">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="stat-number">12</div>
+                                        <small class="text-muted">Posts</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-number">2</div>
+                                        <small class="text-muted">Challenges</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-number">4.9</div>
+                                        <small class="text-muted">Rating</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="member-avatars mb-3">
+                                <div class="avatar-stack">
+                                    <img src="https://via.placeholder.com/32x32/FF9F43/FFFFFF?text=D" class="avatar-sm rounded-circle" alt="Member">
+                                    <img src="https://via.placeholder.com/32x32/6C5CE7/FFFFFF?text=E" class="avatar-sm rounded-circle" alt="Member">
+                                    <img src="https://via.placeholder.com/32x32/A29BFE/FFFFFF?text=F" class="avatar-sm rounded-circle" alt="Member">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-success w-100">Join Group</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card study-group-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-danger">Full</span>
+                            <small class="text-muted">15/15 members</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Character Design Studio</h5>
+                            <p class="card-text">Advanced character design techniques and portfolio development for aspiring concept artists.</p>
+                            
+                            <div class="group-tags mb-3">
+                                <span class="badge bg-danger me-1">Advanced</span>
+                                <span class="badge bg-info me-1">Character Design</span>
+                                <span class="badge bg-warning text-dark">Daily</span>
+                            </div>
+                            
+                            <div class="group-stats mb-3">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="stat-number">156</div>
+                                        <small class="text-muted">Posts</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-number">12</div>
+                                        <small class="text-muted">Challenges</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-number">4.7</div>
+                                        <small class="text-muted">Rating</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="member-avatars mb-3">
+                                <div class="avatar-stack">
+                                    <img src="https://via.placeholder.com/32x32/00B894/FFFFFF?text=G" class="avatar-sm rounded-circle" alt="Member">
+                                    <img src="https://via.placeholder.com/32x32/E17055/FFFFFF?text=H" class="avatar-sm rounded-circle" alt="Member">
+                                    <img src="https://via.placeholder.com/32x32/81ECEC/FFFFFF?text=I" class="avatar-sm rounded-circle" alt="Member">
+                                    <span class="avatar-sm rounded-circle bg-light text-muted d-flex align-items-center justify-content-center">+12</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-outline-secondary w-100" disabled>Join Waitlist</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- My Groups -->
+        <div class="tab-pane fade" id="my-groups">
+            <div class="row">
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                        <h4>You haven't joined any groups yet</h4>
+                        <p class="text-muted">Join a study group to start learning with others!</p>
+                        <button class="btn btn-primary" data-bs-toggle="pill" data-bs-target="#all-groups">
+                            Browse Groups
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommended -->
+        <div class="tab-pane fade" id="recommended">
+            <div class="alert alert-info">
+                <i class="fas fa-magic me-2"></i>
+                <strong>AI Recommendations</strong> - Based on your learning progress and interests
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card study-group-card h-100 border-primary">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-primary">Recommended</span>
+                            <small>4/10 members</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">Digital Portrait Painting</h5>
+                            <p class="card-text">Perfect match for your current skill level in digital art!</p>
+                            
+                            <div class="recommendation-reason mb-3">
+                                <small class="text-primary">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Matches your learning preferences
+                                </small>
+                            </div>
+                            
+                            <div class="group-tags mb-3">
+                                <span class="badge bg-primary me-1">Beginner</span>
+                                <span class="badge bg-info me-1">Digital Art</span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary w-100">Join Recommended Group</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Group Modal -->
+<div class="modal fade" id="createGroupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Study Group</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Group Name</label>
+                                <input type="text" class="form-control" placeholder="e.g., Digital Art Beginners">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select">
+                                    <option>Digital Art</option>
+                                    <option>Traditional Art</option>
+                                    <option>Character Design</option>
+                                    <option>Landscape Painting</option>
+                                    <option>Portrait Drawing</option>
+                                    <option>Abstract Art</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" placeholder="Describe what your group will focus on..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Skill Level</label>
+                                <select class="form-select">
+                                    <option>Beginner</option>
+                                    <option>Intermediate</option>
+                                    <option>Advanced</option>
+                                    <option>Mixed Levels</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Max Members</label>
+                                <input type="number" class="form-control" value="10" min="3" max="50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Meeting Frequency</label>
+                                <select class="form-select">
+                                    <option>Weekly</option>
+                                    <option>Bi-weekly</option>
+                                    <option>Monthly</option>
+                                    <option>Flexible</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Group Type</label>
+                                <select class="form-select">
+                                    <option>Open (Anyone can join)</option>
+                                    <option>Request to Join</option>
+                                    <option>Invite Only</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Group Rules</label>
+                        <textarea class="form-control" rows="2" placeholder="Optional: Set guidelines for your group..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.study-group-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #dee2e6;
+}
+
+.study-group-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.avatar-stack {
+    display: flex;
+    align-items: center;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    margin-right: -8px;
+    border: 2px solid white;
+    position: relative;
+    z-index: 1;
+}
+
+.avatar-sm:last-child {
+    margin-right: 0;
+}
+
+.stat-number {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--bs-primary);
+}
+
+.group-tags .badge {
+    font-size: 0.75rem;
+}
+
+.recommendation-reason {
+    background: rgba(13, 110, 253, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--bs-primary);
+}
+
+.nav-pills .nav-link {
+    color: #6c757d;
+    border-radius: 25px;
+    padding: 8px 20px;
+    margin-right: 8px;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+    padding: 20px 30px;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle group joining
+    document.querySelectorAll('.btn:contains("Join Group")').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!this.disabled) {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Joining...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-check me-2"></i>Joined!';
+                    this.classList.remove('btn-primary', 'btn-success');
+                    this.classList.add('btn-outline-success');
+                }, 1500);
+            }
+        });
+    });
+    
+    // Create group form handling
+    document.querySelector('#createGroupModal form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+        submitBtn.disabled = true;
+        
+        setTimeout(() => {
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createGroupModal'));
+            modal.hide();
+            
+            // Show success message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Success!</strong> Your study group has been created.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild.nextSibling);
+            
+            // Reset form
+            this.reset();
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 2000);
+    });
+    
+    // Tab switching with URL updates
+    document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const targetId = e.target.getAttribute('data-bs-target').substring(1);
+            window.history.replaceState(null, null, `#${targetId}`);
+        });
+    });
+    
+    // Initialize from URL hash
+    if (window.location.hash) {
+        const tab = document.querySelector(`[data-bs-target="${window.location.hash}"]`);
+        if (tab) {
+            new bootstrap.Tab(tab).show();
+        }
+    }
+});
+</script>
+{% endblock %}

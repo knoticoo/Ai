@@ -2350,6 +2350,18 @@ def start_learning():
     
     return render_template('start_learning.html')
 
+@app.route('/ai_critique')
+@login_required
+def ai_critique():
+    """AI-powered art critique and improvement system"""
+    return render_template('ai_critique.html')
+
+@app.route('/study_groups')
+@login_required
+def study_groups():
+    """Study groups for collaborative learning"""
+    return render_template('study_groups.html')
+
 @app.route('/admin/analytics')
 @login_required
 def admin_analytics():
