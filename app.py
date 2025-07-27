@@ -767,28 +767,31 @@ def update_user_stats(user_id, action_type, value=1):
         stats = UserStats(user_id=user_id)
         db.session.add(stats)
     
+    # Ensure all stats values are not None before adding
     if action_type == 'artwork_uploaded':
-        stats.total_artworks += value
+        stats.total_artworks = (stats.total_artworks or 0) + value
     elif action_type == 'likes_received':
-        stats.total_likes_received += value
+        stats.total_likes_received = (stats.total_likes_received or 0) + value
     elif action_type == 'comment_made':
-        stats.total_comments_made += value
+        stats.total_comments_made = (stats.total_comments_made or 0) + value
     elif action_type == 'battle_won':
-        stats.battles_won += value
+        stats.battles_won = (stats.battles_won or 0) + value
     elif action_type == 'battle_participated':
-        stats.battles_participated += value
+        stats.battles_participated = (stats.battles_participated or 0) + value
     elif action_type == 'challenge_completed':
-        stats.challenges_completed += value
+        stats.challenges_completed = (stats.challenges_completed or 0) + value
     
     # Update streak
     today = datetime.utcnow().date()
     if stats.last_activity_date != today:
         if stats.last_activity_date == today - timedelta(days=1):
-            stats.daily_streak += 1
+            stats.daily_streak = (stats.daily_streak or 0) + 1
         else:
             stats.daily_streak = 1
         stats.last_activity_date = today
-        if stats.daily_streak > stats.longest_streak:
+        
+        # Update longest streak if needed
+        if stats.daily_streak > (stats.longest_streak or 0):
             stats.longest_streak = stats.daily_streak
     
     db.session.commit()
@@ -2068,7 +2071,21 @@ def admin_panel():
     users = User.query.all()
     challenges = Challenge.query.all()
     learning_paths = LearningPath.query.all()
-    return render_template('admin_panel.html', users=users, challenges=challenges, learning_paths=learning_paths)
+    
+    # Calculate admin statistics
+    stats = {
+        'total_users': User.query.count(),
+        'total_artworks': Artwork.query.count(),
+        'total_challenges': Challenge.query.filter_by(is_active=True).count(),
+        'total_posts': ForumPost.query.count(),
+        'total_battles': ArtBattle.query.count(),
+        'total_learning_paths': LearningPath.query.filter_by(is_active=True).count(),
+        'recent_signups': User.query.filter(User.join_date >= datetime.utcnow() - timedelta(days=7)).count(),
+        'active_battles': ArtBattle.query.filter(ArtBattle.end_date > datetime.utcnow()).count()
+    }
+    
+    return render_template('admin_panel.html', users=users, challenges=challenges, 
+                         learning_paths=learning_paths, stats=stats)
 
 @app.route('/admin/challenge/new', methods=['GET', 'POST'])
 @login_required
@@ -2112,6 +2129,114 @@ def new_learning_path():
         return redirect(url_for('admin_panel'))
     
     return render_template('new_learning_path.html')
+
+@app.route('/admin/analytics')
+@login_required
+def admin_analytics():
+    """Advanced analytics dashboard for admins"""
+    if not current_user.is_admin:
+        flash('Access denied')
+        return redirect(url_for('index'))
+    
+    # User growth analytics
+    user_growth = []
+    for i in range(30):  # Last 30 days
+        date = datetime.utcnow().date() - timedelta(days=i)
+        count = User.query.filter(User.join_date >= date).count()
+        user_growth.append({'date': date.strftime('%Y-%m-%d'), 'count': count})
+    
+    # Most active users
+    top_users = db.session.query(User, UserStats).join(UserStats).order_by(
+        (UserStats.total_artworks + UserStats.total_comments_made + UserStats.battles_participated).desc()
+    ).limit(10).all()
+    
+    # Popular learning paths
+    popular_paths = db.session.query(LearningPath, db.func.count(UserLearningProgress.id)).outerjoin(
+        UserLearningProgress
+    ).group_by(LearningPath.id).order_by(db.func.count(UserLearningProgress.id).desc()).limit(5).all()
+    
+    # Battle participation stats
+    battle_stats = {
+        'total_battles': ArtBattle.query.count(),
+        'active_battles': ArtBattle.query.filter(ArtBattle.end_date > datetime.utcnow()).count(),
+        'completed_battles': ArtBattle.query.filter(ArtBattle.end_date <= datetime.utcnow()).count(),
+        'total_submissions': BattleSubmission.query.count()
+    }
+    
+    return render_template('admin_analytics.html', 
+                         user_growth=user_growth, 
+                         top_users=top_users,
+                         popular_paths=popular_paths,
+                         battle_stats=battle_stats)
+
+@app.route('/admin/user/<int:user_id>/toggle_admin', methods=['POST'])
+@login_required
+def toggle_user_admin(user_id):
+    """Toggle admin status for a user"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        return jsonify({'error': 'Cannot modify your own admin status'}), 400
+    
+    user.is_admin = not user.is_admin
+    db.session.commit()
+    
+    return jsonify({
+        'success': True, 
+        'is_admin': user.is_admin,
+        'message': f'User {user.username} admin status updated'
+    })
+
+@app.route('/admin/maintenance')
+@login_required
+def maintenance_panel():
+    """System maintenance and cleanup tools"""
+    if not current_user.is_admin:
+        flash('Access denied')
+        return redirect(url_for('index'))
+    
+    # System health checks
+    health_stats = {
+        'database_size': 'N/A',  # Would need OS-specific implementation
+        'orphaned_files': 0,     # Could check for files without database records
+        'inactive_users': User.query.filter(User.join_date < datetime.utcnow() - timedelta(days=90)).count(),
+        'empty_learning_paths': LearningPath.query.filter(~LearningPath.lessons.any()).count(),
+        'unmoderated_posts': ForumPost.query.filter_by(is_approved=False).count() if hasattr(ForumPost, 'is_approved') else 0
+    }
+    
+    return render_template('maintenance_panel.html', health_stats=health_stats)
+
+@app.route('/api/user_activity')
+@login_required
+def user_activity_api():
+    """API endpoint for user activity data"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    # Daily activity for the last 7 days
+    activity_data = []
+    for i in range(7):
+        date = datetime.utcnow().date() - timedelta(days=i)
+        
+        # Count various activities for this date
+        artworks = Artwork.query.filter(
+            db.func.date(Artwork.upload_date) == date
+        ).count()
+        
+        posts = ForumPost.query.filter(
+            db.func.date(ForumPost.created_date) == date
+        ).count()
+        
+        activity_data.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'artworks': artworks,
+            'posts': posts,
+            'total': artworks + posts
+        })
+    
+    return jsonify(activity_data)
 
 def migrate_database():
     """Handle database schema migrations"""
