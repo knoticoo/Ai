@@ -657,11 +657,48 @@ def challenge_detail(challenge_id):
 def submit_challenge(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
     
-    if 'artwork' not in request.files:
+    # Check if submitting from gallery
+    if request.form.get('from_gallery') == 'true':
+        selected_artwork_id = request.form.get('selected_artwork_id')
+        if not selected_artwork_id:
+            flash('No artwork selected from gallery')
+            return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+        
+        # Verify the artwork belongs to the current user
+        artwork = Artwork.query.filter_by(id=selected_artwork_id, user_id=current_user.id).first()
+        if not artwork:
+            flash('Invalid artwork selection')
+            return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+        
+        # Check if already submitted this artwork to this challenge
+        existing_submission = ChallengeSubmission.query.filter_by(
+            user_id=current_user.id, 
+            challenge_id=challenge_id,
+            artwork_id=artwork.id
+        ).first()
+        
+        if existing_submission:
+            flash('This artwork has already been submitted to this challenge')
+            return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+        
+        # Create submission
+        submission = ChallengeSubmission(
+            user_id=current_user.id,
+            challenge_id=challenge_id,
+            artwork_id=artwork.id
+        )
+        db.session.add(submission)
+        db.session.commit()
+        
+        flash('Gallery artwork submitted successfully!')
+        return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+    
+    # Original upload logic
+    if 'artwork_file' not in request.files:
         flash('No file selected')
         return redirect(url_for('challenge_detail', challenge_id=challenge_id))
     
-    file = request.files['artwork']
+    file = request.files['artwork_file']
     if file.filename == '':
         flash('No file selected')
         return redirect(url_for('challenge_detail', challenge_id=challenge_id))
@@ -694,6 +731,25 @@ def submit_challenge(challenge_id):
         
         flash('Challenge submission successful!')
         return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+
+@app.route('/api/user/artworks')
+@login_required
+def api_user_artworks():
+    """API endpoint to get current user's artworks for gallery selection"""
+    artworks = Artwork.query.filter_by(user_id=current_user.id).order_by(Artwork.upload_date.desc()).all()
+    
+    artworks_data = []
+    for artwork in artworks:
+        artworks_data.append({
+            'id': artwork.id,
+            'title': artwork.title,
+            'filename': artwork.filename,
+            'description': artwork.description,
+            'upload_date': artwork.upload_date.strftime('%Y-%m-%d'),
+            'category': artwork.category
+        })
+    
+    return jsonify(artworks_data)
 
 @app.route('/forum')
 def forum():
@@ -2152,9 +2208,9 @@ def admin_analytics():
     ).limit(10).all()
     
     # Popular learning paths
-    popular_paths = db.session.query(LearningPath, db.func.count(UserLearningProgress.id)).outerjoin(
-        UserLearningProgress
-    ).group_by(LearningPath.id).order_by(db.func.count(UserLearningProgress.id).desc()).limit(5).all()
+    popular_paths = db.session.query(LearningPath, db.func.count(UserPathProgress.id)).outerjoin(
+        UserPathProgress
+    ).group_by(LearningPath.id).order_by(db.func.count(UserPathProgress.id).desc()).limit(5).all()
     
     # Battle participation stats
     battle_stats = {
@@ -2381,7 +2437,7 @@ def user_portfolio(username):
         db.session.commit()
     
     # Get user's learning progress
-    learning_progress = UserLearningProgress.query.filter_by(user_id=user.id).all()
+    learning_progress = UserPathProgress.query.filter_by(user_id=user.id).all()
     
     return render_template('enhanced_portfolio.html',
                          user=user,

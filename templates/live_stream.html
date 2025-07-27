@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Live Streams - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">Live Art Streams</h1>
+        <p class="lead text-muted">Watch artists create in real-time and learn new techniques</p>
+    </div>
+    
+    <!-- Featured Stream -->
+    <div class="card bg-gradient-primary text-white mb-5">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="card-title">🔴 Featured Live Stream</h3>
+                    <h5 class="mb-3">Digital Portrait Painting Techniques</h5>
+                    <p class="card-text">Join master artist Sarah Chen as she demonstrates advanced digital portrait techniques using Photoshop and Procreate.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-eye me-2"></i>
+                        <span class="me-4">1,247 viewers</span>
+                        <i class="fas fa-clock me-2"></i>
+                        <span>Started 32 minutes ago</span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="position-relative">
+                        <img src="https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Live+Stream" 
+                             class="img-fluid rounded" 
+                             alt="Featured Stream Thumbnail">
+                        <span class="badge bg-danger position-absolute top-0 start-0 m-2">
+                            <i class="fas fa-circle me-1" style="font-size: 8px;"></i>LIVE
+                        </span>
+                    </div>
+                    <button class="btn btn-light btn-lg mt-3">
+                        <i class="fas fa-play me-2"></i>Watch Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Live Streams Grid -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>🔴 Currently Live</h2>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary active">All</button>
+                    <button class="btn btn-outline-primary">Digital Art</button>
+                    <button class="btn btn-outline-primary">Traditional</button>
+                    <button class="btn btn-outline-primary">Tutorials</button>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Live Stream 1 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card stream-card h-100">
+                        <div class="position-relative">
+                            <img src="https://via.placeholder.com/350x200/E74C3C/FFFFFF?text=Watercolor+Demo" 
+                                 class="card-img-top" 
+                                 alt="Stream Thumbnail">
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-2">
+                                <i class="fas fa-circle me-1" style="font-size: 8px;"></i>LIVE
+                            </span>
+                            <div class="position-absolute bottom-0 end-0 m-2">
+                                <span class="badge bg-dark bg-opacity-75">
+                                    <i class="fas fa-eye me-1"></i>234
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">Watercolor Landscape Techniques</h6>
+                            <p class="card-text text-muted small">Learn to paint stunning landscapes with watercolors</p>
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="https://via.placeholder.com/30x30/9B59B6/FFFFFF?text=A" 
+                                     class="rounded-circle me-2" 
+                                     alt="Artist Avatar">
+                                <small class="text-muted">Alex Rodriguez</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>1h 15m
+                                </small>
+                                <button class="btn btn-primary btn-sm">Join</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Live Stream 2 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card stream-card h-100">
+                        <div class="position-relative">
+                            <img src="https://via.placeholder.com/350x200/3498DB/FFFFFF?text=Character+Design" 
+                                 class="card-img-top" 
+                                 alt="Stream Thumbnail">
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-2">
+                                <i class="fas fa-circle me-1" style="font-size: 8px;"></i>LIVE
+                            </span>
+                            <div class="position-absolute bottom-0 end-0 m-2">
+                                <span class="badge bg-dark bg-opacity-75">
+                                    <i class="fas fa-eye me-1"></i>89
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">Character Design Fundamentals</h6>
+                            <p class="card-text text-muted small">Creating memorable characters from concept to completion</p>
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="https://via.placeholder.com/30x30/E67E22/FFFFFF?text=M" 
+                                     class="rounded-circle me-2" 
+                                     alt="Artist Avatar">
+                                <small class="text-muted">Maya Patel</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>45m
+                                </small>
+                                <button class="btn btn-primary btn-sm">Join</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Live Stream 3 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card stream-card h-100">
+                        <div class="position-relative">
+                            <img src="https://via.placeholder.com/350x200/2ECC71/FFFFFF?text=Digital+Sculpting" 
+                                 class="card-img-top" 
+                                 alt="Stream Thumbnail">
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-2">
+                                <i class="fas fa-circle me-1" style="font-size: 8px;"></i>LIVE
+                            </span>
+                            <div class="position-absolute bottom-0 end-0 m-2">
+                                <span class="badge bg-dark bg-opacity-75">
+                                    <i class="fas fa-eye me-1"></i>156
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">ZBrush Digital Sculpting</h6>
+                            <p class="card-text text-muted small">Advanced 3D character sculpting in ZBrush</p>
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="https://via.placeholder.com/30x30/8E44AD/FFFFFF?text=J" 
+                                     class="rounded-circle me-2" 
+                                     alt="Artist Avatar">
+                                <small class="text-muted">Jordan Kim</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>2h 30m
+                                </small>
+                                <button class="btn btn-primary btn-sm">Join</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upcoming Streams -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4">📅 Upcoming Streams</h2>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title">Oil Painting Masterclass</h6>
+                                    <p class="card-text text-muted small mb-2">Classical oil painting techniques for portraits</p>
+                                    <small class="text-muted">by Isabella Martinez</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="badge bg-warning text-dark mb-2">
+                                        <i class="fas fa-calendar me-1"></i>Tomorrow
+                                    </div>
+                                    <div class="text-muted small">3:00 PM EST</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-warning btn-sm mt-2">Set Reminder</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title">Concept Art for Games</h6>
+                                    <p class="card-text text-muted small mb-2">Environment design for video games</p>
+                                    <small class="text-muted">by David Chen</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="badge bg-info text-dark mb-2">
+                                        <i class="fas fa-calendar me-1"></i>Friday
+                                    </div>
+                                    <div class="text-muted small">7:00 PM EST</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-info btn-sm mt-2">Set Reminder</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Start Your Own Stream -->
+    {% if current_user.is_authenticated %}
+    <div class="card bg-light">
+        <div class="card-body text-center">
+            <h4>Share Your Art with the World</h4>
+            <p class="text-muted">Start your own live stream and teach others your techniques</p>
+            <button class="btn btn-primary btn-lg" onclick="alert('Live streaming feature coming soon!')">
+                <i class="fas fa-video me-2"></i>Start Streaming
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-light">
+        <div class="card-body text-center">
+            <h4>Join the Community</h4>
+            <p class="text-muted">Create an account to watch streams, participate in chat, and start your own streams</p>
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-user-plus me-2"></i>Sign Up Now
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.stream-card {
+    transition: transform 0.2s;
+}
+
+.stream-card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
+{% endblock %}

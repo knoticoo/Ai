@@ -119,7 +119,7 @@
                         <p class="card-text small">{{ submission.artwork.description[:80] }}...</p>
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted">{{ submission.submission_date.strftime('%I:%M %p') }}</small>
-                            <a href="{{ url_for('artwork_detail', id=submission.artwork.id) }}" class="btn btn-outline-primary btn-sm">
+                            <a href="{{ url_for('artwork_detail', artwork_id=submission.artwork.id) }}" class="btn btn-outline-primary btn-sm">
                                 View
                             </a>
                         </div>

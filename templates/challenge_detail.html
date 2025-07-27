@@ -53,10 +53,28 @@
             <h4 class="mb-0"><i class="fas fa-upload me-2"></i>Submit Your Entry</h4>
         </div>
         <div class="card-body">
-            <form action="{{ url_for('submit_challenge', challenge_id=challenge.id) }}" method="post" enctype="multipart/form-data">
+            <!-- Submission Options -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="submission_type" id="upload_new" value="upload" checked>
+                        <label class="btn btn-outline-primary" for="upload_new">
+                            <i class="fas fa-upload me-2"></i>Upload New Artwork
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="submission_type" id="from_gallery" value="gallery">
+                        <label class="btn btn-outline-primary" for="from_gallery">
+                            <i class="fas fa-images me-2"></i>Choose from Gallery
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload New Form -->
+            <form id="uploadForm" action="{{ url_for('submit_challenge', challenge_id=challenge.id) }}" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="artwork_file" class="form-label">Upload Artwork</label>
-                    <input type="file" class="form-control" id="artwork_file" name="artwork_file" accept="image/*" required>
+                    <input type="file" class="form-control" id="artwork_file" name="artwork_file" accept="image/*">
                     <div class="form-text">Accepted formats: JPG, PNG, GIF (max 16MB)</div>
                 </div>
                 
@@ -67,6 +85,41 @@
                 
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-paper-plane me-2"></i>Submit Entry
+                </button>
+            </form>
+            
+            <!-- Gallery Selection Form -->
+            <form id="galleryForm" action="{{ url_for('submit_challenge', challenge_id=challenge.id) }}" method="post" style="display: none;">
+                <input type="hidden" name="from_gallery" value="true">
+                <input type="hidden" name="selected_artwork_id" id="selectedArtworkId">
+                
+                <div class="mb-3">
+                    <label class="form-label">Select Artwork from Your Gallery</label>
+                    <div id="galleryGrid" class="row g-3">
+                        <!-- Gallery items will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="mb-3" id="selectedArtworkPreview" style="display: none;">
+                    <label class="form-label">Selected Artwork</label>
+                    <div class="card" style="max-width: 300px;">
+                        <img id="selectedArtworkImage" src="" class="card-img-top" alt="Selected artwork">
+                        <div class="card-body">
+                            <h6 id="selectedArtworkTitle" class="card-title"></h6>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                                Change Selection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="gallery_description" class="form-label">Additional Notes (Optional)</label>
+                    <textarea class="form-control" id="gallery_description" name="description" rows="3" placeholder="Add any additional notes about your submission..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="submitGalleryBtn" disabled>
+                    <i class="fas fa-paper-plane me-2"></i>Submit Selected Artwork
                 </button>
             </form>
         </div>
@@ -118,4 +171,165 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadRadio = document.getElementById('upload_new');
+    const galleryRadio = document.getElementById('from_gallery');
+    const uploadForm = document.getElementById('uploadForm');
+    const galleryForm = document.getElementById('galleryForm');
+    const galleryGrid = document.getElementById('galleryGrid');
+    
+    // Toggle between upload and gallery forms
+    uploadRadio.addEventListener('change', function() {
+        if (this.checked) {
+            uploadForm.style.display = 'block';
+            galleryForm.style.display = 'none';
+            document.getElementById('artwork_file').required = true;
+        }
+    });
+    
+    galleryRadio.addEventListener('change', function() {
+        if (this.checked) {
+            uploadForm.style.display = 'none';
+            galleryForm.style.display = 'block';
+            document.getElementById('artwork_file').required = false;
+            loadUserGallery();
+        }
+    });
+    
+    function loadUserGallery() {
+        galleryGrid.innerHTML = '<div class="col-12 text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i><p class="mt-2">Loading your artworks...</p></div>';
+        
+        fetch('/api/user/artworks')
+            .then(response => response.json())
+            .then(artworks => {
+                galleryGrid.innerHTML = '';
+                
+                if (artworks.length === 0) {
+                    galleryGrid.innerHTML = `
+                        <div class="col-12 text-center py-4">
+                            <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No artworks in your gallery yet.</p>
+                            <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Your First Artwork
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                artworks.forEach(artwork => {
+                    const artworkDiv = document.createElement('div');
+                    artworkDiv.className = 'col-md-6 col-lg-3';
+                    artworkDiv.innerHTML = `
+                        <div class="card artwork-selector" data-artwork-id="${artwork.id}" data-artwork-title="${artwork.title}" data-artwork-filename="${artwork.filename}">
+                            <div class="position-relative">
+                                <img src="{{ url_for('static', filename='uploads/') }}${artwork.filename}" 
+                                     class="card-img-top" 
+                                     alt="${artwork.title}"
+                                     style="height: 150px; object-fit: cover;"
+                                     onerror="this.src='https://via.placeholder.com/200x150/6C63FF/FFFFFF?text=${encodeURIComponent(artwork.title)}'">
+                                <div class="position-absolute top-0 end-0 m-2" style="display: none;">
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <h6 class="card-title small mb-0">${artwork.title}</h6>
+                                <small class="text-muted">${artwork.category || 'Uncategorized'}</small>
+                            </div>
+                        </div>
+                    `;
+                    galleryGrid.appendChild(artworkDiv);
+                });
+                
+                // Add click handlers for artwork selection
+                document.querySelectorAll('.artwork-selector').forEach(card => {
+                    card.addEventListener('click', function() {
+                        selectArtwork(this);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading artworks:', error);
+                galleryGrid.innerHTML = `
+                    <div class="col-12 text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <p class="text-muted">Error loading artworks. Please try again.</p>
+                        <button class="btn btn-outline-primary" onclick="loadUserGallery()">
+                            <i class="fas fa-sync me-2"></i>Retry
+                        </button>
+                    </div>
+                `;
+            });
+    }
+    
+    function selectArtwork(cardElement) {
+        // Remove previous selection
+        document.querySelectorAll('.artwork-selector').forEach(card => {
+            card.classList.remove('border-primary');
+            card.querySelector('.position-absolute').style.display = 'none';
+        });
+        
+        // Mark as selected
+        cardElement.classList.add('border-primary');
+        cardElement.querySelector('.position-absolute').style.display = 'block';
+        
+        // Get artwork data
+        const artworkId = cardElement.dataset.artworkId;
+        const artworkTitle = cardElement.dataset.artworkTitle;
+        const artworkFilename = cardElement.dataset.artworkFilename;
+        
+        // Update form
+        document.getElementById('selectedArtworkId').value = artworkId;
+        
+        // Show preview
+        const preview = document.getElementById('selectedArtworkPreview');
+        const previewImage = document.getElementById('selectedArtworkImage');
+        const previewTitle = document.getElementById('selectedArtworkTitle');
+        
+        previewImage.src = cardElement.querySelector('img').src;
+        previewTitle.textContent = artworkTitle;
+        preview.style.display = 'block';
+        
+        // Enable submit button
+        document.getElementById('submitGalleryBtn').disabled = false;
+    }
+    
+    window.clearSelection = function() {
+        document.querySelectorAll('.artwork-selector').forEach(card => {
+            card.classList.remove('border-primary');
+            card.querySelector('.position-absolute').style.display = 'none';
+        });
+        
+        document.getElementById('selectedArtworkId').value = '';
+        document.getElementById('selectedArtworkPreview').style.display = 'none';
+        document.getElementById('submitGalleryBtn').disabled = true;
+    };
+});
+</script>
+
+<style>
+.artwork-selector {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.artwork-selector:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.artwork-selector.border-primary {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.btn-check:checked + .btn {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+</style>
 {% endblock %}
