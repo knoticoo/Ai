@@ -2113,9 +2113,31 @@ def new_learning_path():
     
     return render_template('new_learning_path.html')
 
+def migrate_database():
+    """Handle database schema migrations"""
+    try:
+        # Check if learning_path table has category column
+        with db.engine.connect() as conn:
+            result = conn.execute(db.text("PRAGMA table_info(learning_path)"))
+            columns = [row[1] for row in result]
+            
+            if 'category' not in columns:
+                print("🔄 Adding missing 'category' column to learning_path table...")
+                conn.execute(db.text("ALTER TABLE learning_path ADD COLUMN category VARCHAR(50) DEFAULT 'General'"))
+                conn.commit()
+                print("✅ Category column added successfully!")
+                
+    except Exception as e:
+        print(f"⚠️ Migration check failed: {e}")
+        print("🔄 Recreating database tables...")
+        db.drop_all()
+        db.create_all()
+        print("✅ Database recreated successfully!")
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        migrate_database()  # Handle database migrations
         create_admin_user()  # Create admin user on startup
         initialize_achievements()  # Create default achievements
         initialize_skill_trees()  # Create default skill trees
