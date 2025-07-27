@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Art Marketplace - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-store"></i> Art Marketplace
+            </h1>
+            <p class="lead">Discover and showcase amazing artwork from our community</p>
+        </div>
+    </div>
+
+    <!-- Featured Artworks -->
+    {% if featured_artworks %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="fas fa-star"></i> Featured Artworks
+            </h3>
+        </div>
+        {% for artwork in featured_artworks %}
+        <div class="col-md-4 mb-4">
+            <div class="card artwork-card">
+                <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                     class="card-img-top" alt="{{ artwork.title }}" style="height: 250px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ artwork.title }}</h5>
+                    <p class="text-muted">by {{ artwork.artist.username }}</p>
+                    <p class="card-text">{{ artwork.description[:100] }}...</p>
+                    {% if artwork.ai_score %}
+                    <div class="mb-2">
+                        <span class="badge bg-success">AI Score: {{ "%.1f"|format(artwork.ai_score) }}/10</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">{{ artwork.upload_date.strftime('%B %d, %Y') }}</small>
+                        <a href="{{ url_for('artwork_detail', id=artwork.id) }}" class="btn btn-primary btn-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Categories Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="fas fa-tags"></i> Browse by Category
+            </h3>
+            <div class="btn-group flex-wrap" role="group">
+                <button type="button" class="btn btn-outline-primary active" data-category="all">All</button>
+                {% for category in categories %}
+                <button type="button" class="btn btn-outline-primary" data-category="{{ category }}">{{ category }}</button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Artworks -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="fas fa-clock"></i> Recent Artworks
+            </h3>
+        </div>
+        {% for artwork in recent_artworks %}
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card artwork-card">
+                <img src="{{ url_for('static', filename='uploads/' + artwork.filename) }}" 
+                     class="card-img-top" alt="{{ artwork.title }}" style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                    <h6 class="card-title">{{ artwork.title }}</h6>
+                    <p class="text-muted small">by {{ artwork.artist.username }}</p>
+                    {% if artwork.category %}
+                    <span class="badge bg-secondary">{{ artwork.category }}</span>
+                    {% endif %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('artwork_detail', id=artwork.id) }}" class="btn btn-outline-primary btn-sm">
+                            View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not recent_artworks %}
+    <div class="text-center py-5">
+        <i class="fas fa-palette fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No Artworks Yet</h5>
+        <p class="text-muted">Be the first to share your amazing artwork!</p>
+        <a href="{{ url_for('upload_artwork') }}" class="btn btn-primary">
+            <i class="fas fa-upload me-1"></i>Upload Artwork
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.artwork-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.artwork-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+</style>
+
+<script>
+// Category filtering
+document.querySelectorAll('[data-category]').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('[data-category]').forEach(b => b.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        const category = this.dataset.category;
+        const artworkCards = document.querySelectorAll('.artwork-card');
+        
+        artworkCards.forEach(card => {
+            const cardCategory = card.querySelector('.badge')?.textContent || '';
+            if (category === 'all' || cardCategory === category) {
+                card.parentElement.style.display = 'block';
+            } else {
+                card.parentElement.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
