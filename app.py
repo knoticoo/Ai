@@ -2187,6 +2187,64 @@ def new_learning_path():
     
     return render_template('new_learning_path.html')
 
+@app.route('/admin/ai_learning_path', methods=['GET', 'POST'])
+@login_required
+def admin_ai_learning_path():
+    """Create learning paths with AI assistance"""
+    if not current_user.is_admin:
+        flash('Access denied')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        topic = request.form.get('topic', '').strip()
+        difficulty = request.form.get('difficulty', 'Beginner')
+        description = request.form.get('description', '').strip()
+        
+        if not topic:
+            flash('Topic is required')
+            return render_template('admin_ai_learning_path.html')
+        
+        try:
+            # Generate AI-powered learning path
+            ai_content = ai_guide_generator.generate_comprehensive_learning_path(
+                topic, difficulty, description
+            )
+            
+            # Create the learning path
+            learning_path = LearningPath(
+                title=ai_content['title'],
+                description=ai_content['description'],
+                difficulty=difficulty,
+                order=LearningPath.query.count() + 1,
+                category=ai_content.get('category', 'General'),
+                estimated_hours=ai_content.get('estimated_hours', 2)
+            )
+            db.session.add(learning_path)
+            db.session.flush()  # Get the ID
+            
+            # Create lessons for this learning path
+            for lesson_data in ai_content.get('lessons', []):
+                lesson = Lesson(
+                    path_id=learning_path.id,
+                    title=lesson_data['title'],
+                    content=lesson_data['content'],
+                    lesson_type=lesson_data.get('type', 'theory'),
+                    order=lesson_data['order'],
+                    estimated_minutes=lesson_data.get('estimated_minutes', 15),
+                    completion_xp=lesson_data.get('xp', 10)
+                )
+                db.session.add(lesson)
+            
+            db.session.commit()
+            flash(f'AI-generated learning path "{ai_content["title"]}" created successfully with {len(ai_content.get("lessons", []))} lessons!')
+            return redirect(url_for('admin_panel'))
+            
+        except Exception as e:
+            flash(f'Error creating AI learning path: {str(e)}')
+            return render_template('admin_ai_learning_path.html')
+    
+    return render_template('admin_ai_learning_path.html')
+
 @app.route('/admin/analytics')
 @login_required
 def admin_analytics():
@@ -2469,12 +2527,7 @@ def art_marketplace():
                          recent_artworks=recent_artworks,
                          categories=categories)
 
-# Live Streaming
-@app.route('/stream')
-@login_required
-def live_stream():
-    """Live streaming interface for artists"""
-    return render_template('live_stream.html')
+
 
 @app.route('/api/start_stream', methods=['POST'])
 @login_required
