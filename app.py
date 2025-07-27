@@ -2116,16 +2116,34 @@ def new_learning_path():
 def migrate_database():
     """Handle database schema migrations"""
     try:
-        # Check if learning_path table has category column
+        # Check if learning_path table exists and get its columns
         with db.engine.connect() as conn:
             result = conn.execute(db.text("PRAGMA table_info(learning_path)"))
-            columns = [row[1] for row in result]
+            existing_columns = [row[1] for row in result]
             
-            if 'category' not in columns:
-                print("🔄 Adding missing 'category' column to learning_path table...")
-                conn.execute(db.text("ALTER TABLE learning_path ADD COLUMN category VARCHAR(50) DEFAULT 'General'"))
+            # Define expected columns with their SQL definitions
+            expected_columns = {
+                'category': "VARCHAR(50) DEFAULT 'General'",
+                'estimated_hours': "INTEGER DEFAULT 1",
+                'thumbnail_url': "VARCHAR(200)",
+                'prerequisites': "TEXT",
+                'completion_reward_xp': "INTEGER DEFAULT 50",
+                'created_at': "DATETIME DEFAULT CURRENT_TIMESTAMP"
+            }
+            
+            # Add missing columns
+            columns_added = []
+            for column_name, column_def in expected_columns.items():
+                if column_name not in existing_columns:
+                    print(f"🔄 Adding missing '{column_name}' column to learning_path table...")
+                    conn.execute(db.text(f"ALTER TABLE learning_path ADD COLUMN {column_name} {column_def}"))
+                    columns_added.append(column_name)
+            
+            if columns_added:
                 conn.commit()
-                print("✅ Category column added successfully!")
+                print(f"✅ Added columns: {', '.join(columns_added)}")
+            else:
+                print("✅ All learning_path columns are up to date!")
                 
     except Exception as e:
         print(f"⚠️ Migration check failed: {e}")
