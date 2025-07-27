@@ -142,6 +142,312 @@ class AIGuideGenerator:
             print(f"Error generating guide: {e}")
             return self._generate_fallback_guide(title)
 
+    def generate_comprehensive_learning_path(self, topic, difficulty='Beginner', description=''):
+        """
+        Generate a complete learning path with multiple lessons
+        """
+        try:
+            # Determine the category and type
+            guide_type = self._determine_guide_type(topic, description)
+            
+            # Generate structured learning path
+            learning_path_data = {
+                'title': f"{topic} - {difficulty} Course",
+                'description': description or f"Master {topic.lower()} with this comprehensive {difficulty.lower()} course",
+                'category': guide_type.title().replace('_', ' '),
+                'estimated_hours': self._calculate_course_hours(difficulty),
+                'lessons': []
+            }
+            
+            # Generate lessons based on difficulty and topic
+            lesson_topics = self._generate_lesson_structure(guide_type, difficulty)
+            
+            for i, lesson_topic in enumerate(lesson_topics, 1):
+                lesson_content = self._generate_lesson_content(lesson_topic, guide_type, difficulty)
+                
+                lesson = {
+                    'title': lesson_topic['title'],
+                    'content': lesson_content,
+                    'type': lesson_topic.get('type', 'theory'),
+                    'order': i,
+                    'estimated_minutes': lesson_topic.get('duration', 20),
+                    'xp': lesson_topic.get('xp', 15)
+                }
+                learning_path_data['lessons'].append(lesson)
+            
+            return learning_path_data
+            
+        except Exception as e:
+            print(f"Error generating comprehensive learning path: {e}")
+            return self._generate_fallback_learning_path(topic, difficulty)
+
+    def _calculate_course_hours(self, difficulty):
+        """Calculate estimated course hours based on difficulty"""
+        hours_map = {
+            'Beginner': 3,
+            'Intermediate': 5,
+            'Advanced': 8,
+            'Expert': 12
+        }
+        return hours_map.get(difficulty, 3)
+
+    def _generate_lesson_structure(self, guide_type, difficulty):
+        """Generate lesson structure based on type and difficulty"""
+        base_lessons = {
+            'drawing': [
+                {'title': 'Introduction to Drawing Fundamentals', 'type': 'theory', 'duration': 15, 'xp': 10},
+                {'title': 'Line Quality and Control', 'type': 'practical', 'duration': 30, 'xp': 20},
+                {'title': 'Basic Shapes and Forms', 'type': 'practical', 'duration': 25, 'xp': 15},
+                {'title': 'Understanding Perspective', 'type': 'theory', 'duration': 20, 'xp': 15},
+                {'title': 'Shading and Value', 'type': 'practical', 'duration': 35, 'xp': 25}
+            ],
+            'painting': [
+                {'title': 'Color Theory Basics', 'type': 'theory', 'duration': 20, 'xp': 15},
+                {'title': 'Brush Techniques', 'type': 'practical', 'duration': 30, 'xp': 20},
+                {'title': 'Color Mixing', 'type': 'practical', 'duration': 25, 'xp': 15},
+                {'title': 'Composition Principles', 'type': 'theory', 'duration': 20, 'xp': 15},
+                {'title': 'Creating Your First Painting', 'type': 'practical', 'duration': 45, 'xp': 30}
+            ],
+            'digital': [
+                {'title': 'Digital Art Software Overview', 'type': 'theory', 'duration': 15, 'xp': 10},
+                {'title': 'Digital Brushes and Tools', 'type': 'practical', 'duration': 25, 'xp': 15},
+                {'title': 'Layers and Blending Modes', 'type': 'practical', 'duration': 30, 'xp': 20},
+                {'title': 'Digital Color Theory', 'type': 'theory', 'duration': 20, 'xp': 15},
+                {'title': 'Creating Digital Artwork', 'type': 'practical', 'duration': 40, 'xp': 25}
+            ]
+        }
+        
+        lessons = base_lessons.get(guide_type, base_lessons['drawing'])
+        
+        # Add difficulty-specific lessons
+        if difficulty in ['Intermediate', 'Advanced']:
+            advanced_lessons = [
+                {'title': 'Advanced Techniques', 'type': 'practical', 'duration': 35, 'xp': 25},
+                {'title': 'Style Development', 'type': 'theory', 'duration': 25, 'xp': 20}
+            ]
+            lessons.extend(advanced_lessons)
+        
+        if difficulty == 'Advanced':
+            expert_lessons = [
+                {'title': 'Professional Workflow', 'type': 'theory', 'duration': 30, 'xp': 25},
+                {'title': 'Portfolio Development', 'type': 'practical', 'duration': 40, 'xp': 30}
+            ]
+            lessons.extend(expert_lessons)
+        
+        return lessons
+
+    def _generate_lesson_content(self, lesson_topic, guide_type, difficulty):
+        """Generate detailed content for a specific lesson"""
+        content = []
+        
+        # Lesson header
+        content.append(f"# {lesson_topic['title']}")
+        content.append(f"*Estimated time: {lesson_topic['duration']} minutes*")
+        content.append("")
+        
+        # Learning objectives
+        content.append("## Learning Objectives")
+        objectives = self._get_lesson_objectives(lesson_topic['title'], guide_type)
+        for obj in objectives:
+            content.append(f"- {obj}")
+        content.append("")
+        
+        # Main content
+        content.append("## Lesson Content")
+        main_content = self._generate_lesson_main_content(lesson_topic['title'], guide_type, difficulty)
+        content.extend(main_content)
+        content.append("")
+        
+        # Practice exercises
+        if lesson_topic['type'] == 'practical':
+            content.append("## Practice Exercises")
+            exercises = self._get_lesson_exercises(lesson_topic['title'], guide_type)
+            for i, exercise in enumerate(exercises, 1):
+                content.append(f"{i}. {exercise}")
+            content.append("")
+        
+        # Key takeaways
+        content.append("## Key Takeaways")
+        takeaways = self._get_lesson_takeaways(lesson_topic['title'], guide_type)
+        for takeaway in takeaways:
+            content.append(f"- {takeaway}")
+        content.append("")
+        
+        return '\n'.join(content)
+
+    def _get_lesson_objectives(self, lesson_title, guide_type):
+        """Generate learning objectives for a lesson"""
+        objectives_map = {
+            'Introduction to Drawing Fundamentals': [
+                'Understand the basic principles of drawing',
+                'Learn about essential drawing tools and materials',
+                'Identify different drawing techniques and styles'
+            ],
+            'Line Quality and Control': [
+                'Master different types of lines and their uses',
+                'Develop steady hand control and precision',
+                'Practice line weight variation techniques'
+            ],
+            'Basic Shapes and Forms': [
+                'Draw accurate geometric shapes',
+                'Understand form and volume',
+                'Apply shapes to create complex objects'
+            ],
+            'Color Theory Basics': [
+                'Understand primary, secondary, and tertiary colors',
+                'Learn about color relationships and harmony',
+                'Apply color theory to create mood and atmosphere'
+            ]
+        }
+        return objectives_map.get(lesson_title, [
+            'Understand the key concepts of this lesson',
+            'Apply the techniques in practical exercises',
+            'Build upon previous knowledge and skills'
+        ])
+
+    def _generate_lesson_main_content(self, lesson_title, guide_type, difficulty):
+        """Generate main content for a lesson"""
+        content = []
+        
+        if 'Introduction' in lesson_title:
+            content.extend([
+                "Welcome to this comprehensive lesson on art fundamentals!",
+                "",
+                "In this lesson, we'll cover the essential concepts you need to know to get started.",
+                "Whether you're a complete beginner or looking to refresh your knowledge, this lesson",
+                "will provide a solid foundation for your artistic journey.",
+                "",
+                "### What You'll Learn",
+                "- Core principles and techniques",
+                "- Essential tools and materials",
+                "- Best practices for getting started",
+                "",
+                "### Getting Started",
+                "Before we begin, make sure you have your materials ready and a comfortable workspace set up."
+            ])
+        elif 'Line' in lesson_title:
+            content.extend([
+                "Lines are the foundation of all drawing. Mastering line quality and control",
+                "is essential for creating expressive and accurate artwork.",
+                "",
+                "### Types of Lines",
+                "- **Contour lines**: Define the edges and shapes of objects",
+                "- **Gesture lines**: Capture movement and energy",
+                "- **Construction lines**: Help build accurate proportions",
+                "",
+                "### Line Weight and Variation",
+                "Varying your line weight adds depth and interest to your drawings:",
+                "- Thick lines bring elements forward",
+                "- Thin lines push elements back",
+                "- Broken lines suggest texture or uncertainty"
+            ])
+        elif 'Color' in lesson_title:
+            content.extend([
+                "Color is one of the most powerful tools in an artist's toolkit.",
+                "Understanding color theory will help you create more compelling and harmonious artwork.",
+                "",
+                "### The Color Wheel",
+                "The color wheel is your guide to understanding color relationships:",
+                "- **Primary colors**: Red, blue, yellow - cannot be mixed from other colors",
+                "- **Secondary colors**: Orange, green, violet - mixed from two primaries",
+                "- **Tertiary colors**: Mixed from a primary and secondary color",
+                "",
+                "### Color Harmony",
+                "Learn to create pleasing color combinations using these schemes:",
+                "- Complementary: Colors opposite on the wheel",
+                "- Analogous: Colors next to each other on the wheel",
+                "- Triadic: Three colors equally spaced on the wheel"
+            ])
+        else:
+            # Generic content
+            content.extend([
+                f"In this lesson, we'll explore the important concepts of {lesson_title.lower()}.",
+                "",
+                "This lesson builds upon what you've learned previously and introduces new",
+                "techniques and concepts that will enhance your artistic skills.",
+                "",
+                "### Key Points to Remember",
+                "- Practice regularly to develop muscle memory",
+                "- Don't be afraid to make mistakes - they're part of learning",
+                "- Take your time and focus on quality over quantity",
+                "",
+                "### Step-by-Step Process",
+                "Follow these steps to get the most out of this lesson:",
+                "1. Read through all the material first",
+                "2. Gather your materials and set up your workspace",
+                "3. Practice the techniques shown",
+                "4. Complete the exercises at your own pace",
+                "5. Review and reflect on what you've learned"
+            ])
+        
+        return content
+
+    def _get_lesson_exercises(self, lesson_title, guide_type):
+        """Get practice exercises for a lesson"""
+        exercises_map = {
+            'Line Quality and Control': [
+                'Draw 20 straight lines without using a ruler',
+                'Practice drawing smooth curves and circles',
+                'Create a drawing using only different line weights',
+                'Draw the same object with different line styles'
+            ],
+            'Basic Shapes and Forms': [
+                'Draw 10 perfect circles, squares, and triangles',
+                'Combine basic shapes to create simple objects',
+                'Practice drawing 3D forms (cubes, spheres, cylinders)',
+                'Create a still life using only basic geometric forms'
+            ],
+            'Color Mixing': [
+                'Mix all secondary colors from primaries',
+                'Create a color wheel using paint',
+                'Practice mixing different values of the same color',
+                'Create a small painting using only 3 colors'
+            ]
+        }
+        return exercises_map.get(lesson_title, [
+            'Practice the main technique demonstrated in this lesson',
+            'Create a small study applying what you\'ve learned',
+            'Experiment with variations of the technique',
+            'Share your work with the community for feedback'
+        ])
+
+    def _get_lesson_takeaways(self, lesson_title, guide_type):
+        """Get key takeaways for a lesson"""
+        return [
+            'Regular practice is essential for improvement',
+            'Understanding fundamentals builds a strong foundation',
+            'Don\'t rush - take time to master each concept',
+            'Apply what you learn to your own creative projects',
+            'Seek feedback to continue growing as an artist'
+        ]
+
+    def _generate_fallback_learning_path(self, topic, difficulty):
+        """Generate a simple fallback learning path if AI generation fails"""
+        return {
+            'title': f"{topic} - {difficulty} Course",
+            'description': f"Learn {topic.lower()} with this structured course",
+            'category': 'General',
+            'estimated_hours': 3,
+            'lessons': [
+                {
+                    'title': f'Introduction to {topic}',
+                    'content': f'# Introduction to {topic}\n\nWelcome to this course on {topic.lower()}. In this lesson, you\'ll learn the fundamentals and get started with the basics.',
+                    'type': 'theory',
+                    'order': 1,
+                    'estimated_minutes': 20,
+                    'xp': 15
+                },
+                {
+                    'title': f'Basic {topic} Techniques',
+                    'content': f'# Basic {topic} Techniques\n\nNow that you understand the fundamentals, let\'s practice some basic techniques.',
+                    'type': 'practical',
+                    'order': 2,
+                    'estimated_minutes': 30,
+                    'xp': 20
+                }
+            ]
+        }
+
     def _determine_guide_type(self, title, description):
         """Determine the type of guide based on title and description"""
         title_lower = title.lower()

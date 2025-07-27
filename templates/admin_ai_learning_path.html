@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Create AI Learning Path - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-4 fw-bold">🤖 AI Learning Path Creator</h1>
+            <p class="lead text-muted">Let AI generate comprehensive learning courses for your students</p>
+        </div>
+        <a href="{{ url_for('admin_panel') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Admin Panel
+        </a>
+    </div>
+    
+    <!-- AI Course Generator -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-magic me-2"></i>Generate Learning Path with AI
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label for="topic" class="form-label">
+                                <i class="fas fa-lightbulb text-warning me-2"></i>Topic/Subject
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="topic" 
+                                   name="topic" 
+                                   placeholder="e.g., Digital Painting, Portrait Drawing, Watercolor Techniques"
+                                   required>
+                            <div class="form-text">What subject would you like to create a learning path for?</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-align-left text-info me-2"></i>Additional Description (Optional)
+                            </label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3"
+                                      placeholder="Provide any specific requirements, focus areas, or style preferences..."></textarea>
+                            <div class="form-text">Help the AI understand exactly what kind of course you want to create</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="difficulty" class="form-label">
+                                <i class="fas fa-chart-line text-success me-2"></i>Difficulty Level
+                            </label>
+                            <select class="form-select" id="difficulty" name="difficulty" required>
+                                <option value="Beginner" selected>Beginner - Complete newcomers to the subject</option>
+                                <option value="Intermediate">Intermediate - Some prior experience</option>
+                                <option value="Advanced">Advanced - Experienced practitioners</option>
+                                <option value="Expert">Expert - Master-level content</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-magic me-2"></i>Generate Learning Path with AI
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Info Panel -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>How AI Generation Works
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="step-list">
+                        <div class="step-item mb-3">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <strong>Topic Analysis</strong>
+                                <small class="text-muted d-block">AI analyzes your topic and determines the best course structure</small>
+                            </div>
+                        </div>
+                        <div class="step-item mb-3">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <strong>Lesson Planning</strong>
+                                <small class="text-muted d-block">Creates a logical progression of lessons with objectives</small>
+                            </div>
+                        </div>
+                        <div class="step-item mb-3">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <strong>Content Generation</strong>
+                                <small class="text-muted d-block">Generates detailed content, exercises, and learning materials</small>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <strong>Course Creation</strong>
+                                <small class="text-muted d-block">Automatically creates the learning path in your system</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Example Topics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="example-topics">
+                        <span class="badge bg-primary me-2 mb-2">Digital Art Fundamentals</span>
+                        <span class="badge bg-success me-2 mb-2">Watercolor Landscapes</span>
+                        <span class="badge bg-warning text-dark me-2 mb-2">Character Design</span>
+                        <span class="badge bg-info me-2 mb-2">Color Theory</span>
+                        <span class="badge bg-secondary me-2 mb-2">Figure Drawing</span>
+                        <span class="badge bg-danger me-2 mb-2">Composition Techniques</span>
+                        <span class="badge bg-dark me-2 mb-2">Digital Painting</span>
+                        <span class="badge bg-primary me-2 mb-2">Portrait Photography</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Overview -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-star me-2 text-warning"></i>What You Get with AI Generation
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="feature-item text-center mb-3">
+                                <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-book fa-lg"></i>
+                                </div>
+                                <h6>Structured Lessons</h6>
+                                <small class="text-muted">Progressive lessons with clear learning objectives</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="feature-item text-center mb-3">
+                                <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-tasks fa-lg"></i>
+                                </div>
+                                <h6>Practice Exercises</h6>
+                                <small class="text-muted">Hands-on exercises to reinforce learning</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="feature-item text-center mb-3">
+                                <div class="feature-icon bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-clock fa-lg"></i>
+                                </div>
+                                <h6>Time Estimates</h6>
+                                <small class="text-muted">Realistic time estimates for each lesson</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="feature-item text-center mb-3">
+                                <div class="feature-icon bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-trophy fa-lg"></i>
+                                </div>
+                                <h6>XP & Progress</h6>
+                                <small class="text-muted">Gamified learning with experience points</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.step-list {
+    position: relative;
+}
+
+.step-item {
+    display: flex;
+    align-items-flex-start;
+}
+
+.step-number {
+    width: 30px;
+    height: 30px;
+    background: var(--bs-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 30px;
+    width: 2px;
+    height: 40px;
+    background: #dee2e6;
+}
+
+.example-topics .badge {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.example-topics .badge:hover {
+    transform: scale(1.05);
+}
+
+.feature-icon {
+    transition: transform 0.2s;
+}
+
+.feature-item:hover .feature-icon {
+    transform: scale(1.1);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers for example topics
+    document.querySelectorAll('.example-topics .badge').forEach(badge => {
+        badge.addEventListener('click', function() {
+            document.getElementById('topic').value = this.textContent.trim();
+            document.getElementById('topic').focus();
+        });
+    });
+    
+    // Form submission with loading state
+    document.querySelector('form').addEventListener('submit', function() {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating Course...';
+        submitBtn.disabled = true;
+        
+        // Re-enable after 30 seconds as fallback
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 30000);
+    });
+});
+</script>
+{% endblock %}

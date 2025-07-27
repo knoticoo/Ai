@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Art Battles - ArtAI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-4 fw-bold">🥊 Art Battles</h1>
+            <p class="lead text-muted">Compete with artists worldwide in themed art competitions</p>
+        </div>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('create_battle') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create Battle
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Battle Stats -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="fas fa-trophy fa-2x"></i>
+                    </div>
+                    <h3>{{ active_battles|length }}</h3>
+                    <h6>Active Battles</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <h3>{{ total_participants }}</h3>
+                    <h6>Total Participants</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-warning text-white">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                    <h3>{{ voting_battles|length }}</h3>
+                    <h6>In Voting Phase</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <i class="fas fa-medal fa-2x"></i>
+                    </div>
+                    <h3>{{ completed_battles|length }}</h3>
+                    <h6>Completed Battles</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Battles -->
+    {% if active_battles %}
+    <div class="mb-5">
+        <h2 class="mb-4">
+            <i class="fas fa-fire me-2 text-danger"></i>Active Battles
+        </h2>
+        <div class="row g-4">
+            {% for battle in active_battles %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card battle-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="badge bg-danger">
+                            <i class="fas fa-circle me-1" style="font-size: 8px;"></i>ACTIVE
+                        </span>
+                        <small class="text-muted">
+                            <i class="fas fa-users me-1"></i>{{ battle.submissions|length }} entries
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ battle.title }}</h5>
+                        <div class="mb-3">
+                            <span class="badge bg-primary mb-2">{{ battle.theme }}</span>
+                        </div>
+                        <p class="card-text">{{ battle.description }}</p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Prize:</small>
+                                <div class="fw-bold text-warning">
+                                    <i class="fas fa-gem me-1"></i>{{ battle.prize_exp }} XP
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Ends:</small>
+                                <div class="fw-bold">{{ battle.end_date.strftime('%m/%d %H:%M') }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress mb-3" style="height: 6px;">
+                            {% set time_left = ((battle.end_date - now).total_seconds() / 86400) %}
+                            {% set progress = max(0, min(100, (1 - time_left / 7) * 100)) %}
+                            <div class="progress-bar bg-danger" style="width: {{ progress }}%"></div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('battle_detail', battle_id=battle.id) }}" class="btn btn-primary">
+                                <i class="fas fa-sword me-2"></i>Join Battle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Voting Phase Battles -->
+    {% if voting_battles %}
+    <div class="mb-5">
+        <h2 class="mb-4">
+            <i class="fas fa-vote-yea me-2 text-warning"></i>Vote Now
+        </h2>
+        <div class="row g-4">
+            {% for battle in voting_battles %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card battle-card h-100 border-warning">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-warning text-dark">
+                        <span class="badge bg-dark">
+                            <i class="fas fa-vote-yea me-1"></i>VOTING
+                        </span>
+                        <small>
+                            <i class="fas fa-users me-1"></i>{{ battle.submissions|length }} entries
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ battle.title }}</h5>
+                        <div class="mb-3">
+                            <span class="badge bg-primary mb-2">{{ battle.theme }}</span>
+                        </div>
+                        <p class="card-text">{{ battle.description }}</p>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">Voting ends:</small>
+                            <div class="fw-bold">{{ battle.voting_end_date.strftime('%B %d, %Y at %I:%M %p') }}</div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('battle_detail', battle_id=battle.id) }}" class="btn btn-warning">
+                                <i class="fas fa-vote-yea me-2"></i>Vote Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Recent Winners -->
+    {% if completed_battles %}
+    <div class="mb-5">
+        <h2 class="mb-4">
+            <i class="fas fa-crown me-2 text-warning"></i>Recent Winners
+        </h2>
+        <div class="row g-4">
+            {% for battle in completed_battles[:3] %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card battle-card h-100 border-success">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-success text-white">
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-check me-1"></i>COMPLETED
+                        </span>
+                        <small>
+                            <i class="fas fa-calendar me-1"></i>{{ battle.voting_end_date.strftime('%m/%d') }}
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ battle.title }}</h5>
+                        <div class="mb-3">
+                            <span class="badge bg-primary mb-2">{{ battle.theme }}</span>
+                        </div>
+                        
+                        <!-- Winner Display -->
+                        {% if battle.submissions %}
+                        {% set winner = battle.submissions|sort(attribute='votes', reverse=true)|first %}
+                        <div class="winner-display text-center mb-3">
+                            <div class="position-relative d-inline-block">
+                                <img src="{{ url_for('static', filename='uploads/' + winner.artwork.filename) }}" 
+                                     class="img-fluid rounded" 
+                                     style="max-height: 120px; max-width: 100%;"
+                                     alt="Winning artwork">
+                                <div class="position-absolute top-0 start-0">
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-crown"></i> Winner
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">by</small>
+                                <div class="fw-bold">{{ winner.user.username }}</div>
+                                <small class="text-muted">{{ winner.votes }} votes</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('battle_detail', battle_id=battle.id) }}" class="btn btn-outline-success">
+                                <i class="fas fa-eye me-2"></i>View Results
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- How Art Battles Work -->
+    <div class="card bg-light">
+        <div class="card-body">
+            <h4 class="card-title">
+                <i class="fas fa-info-circle me-2 text-info"></i>How Art Battles Work
+            </h4>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center mb-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-brush fa-2x"></i>
+                        </div>
+                        <h6 class="mt-2">1. Create</h6>
+                        <small class="text-muted">Submit your artwork based on the battle theme</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center mb-3">
+                        <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                        <h6 class="mt-2">2. Wait</h6>
+                        <small class="text-muted">Battle ends, voting phase begins</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center mb-3">
+                        <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-vote-yea fa-2x"></i>
+                        </div>
+                        <h6 class="mt-2">3. Vote</h6>
+                        <small class="text-muted">Community votes for the best artwork</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center mb-3">
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-trophy fa-2x"></i>
+                        </div>
+                        <h6 class="mt-2">4. Win</h6>
+                        <small class="text-muted">Winner gets XP and recognition</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.battle-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.battle-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.winner-display img {
+    border: 3px solid #ffc107;
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+}
+</style>
+{% endblock %}
